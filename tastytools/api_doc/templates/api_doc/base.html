@@ -1,0 +1,18 @@
+{% load link %}
+<!DOCTYPE HTML>
+<html>
+    <head>
+        {% link js:tastytools/lib/jquery-1.7.1.js %}
+        {% link js:tastytools/lib/underscore %}
+        {% link js:tastytools/lib/backbone %}
+        {% link css:tastytools/style %}
+
+        {% block extra_head %}
+        {% endblock %}
+    </head>
+
+    <body>
+        {% block content %}
+        {% endblock %}
+    </body>
+</html>
