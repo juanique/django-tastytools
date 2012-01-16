@@ -5,7 +5,7 @@ import settings
 register = template.Library()
 
 
-class LinkNode(template.Node):
+class StaticLinkNode(template.Node):
     def __init__(self, file_type, file_path):
         self.file_type = file_type
         if not file_path.endswith(file_type) and file_type != "img":
@@ -26,9 +26,9 @@ class LinkNode(template.Node):
         return tag
 
 
-def link_tag(parser, token):
-    (link_type, link_file) = tuple(token.split_contents()[1].split(":"))
-    return LinkNode(link_type, link_file)
+def staticlink_tag(parser, token):
+    (staticlink_type, staticlink_file) = tuple(token.split_contents()[1].split(":"))
+    return StaticLinkNode(staticlink_type, staticlink_file)
 
 
-register.tag('link', link_tag)
+register.tag('staticlink', staticlink_tag)

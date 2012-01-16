@@ -1,14 +1,14 @@
 {% extends "api_doc/base.html" %}
-{% load link %}
+{% load staticlink %}
 
 {% block extra_head %}
-    {% link js:tastytools/lib/SyntaxHighlighter/shCore.js %}
-    {% link js:tastytools/lib/SyntaxHighlighter/shBrushPython.js %}
+    {% staticlink js:tastytools/lib/SyntaxHighlighter/shCore.js %}
+    {% staticlink js:tastytools/lib/SyntaxHighlighter/shBrushPython.js %}
 
-    {% link css:tastytools/lib/SyntaxHighlighter/shCore.css %}
-    {% link css:tastytools/lib/SyntaxHighlighter/shThemeDefault %}
+    {% staticlink css:tastytools/lib/SyntaxHighlighter/shCore.css %}
+    {% staticlink css:tastytools/lib/SyntaxHighlighter/shThemeDefault %}
 
-    {% link css:tastytools/api.howto %}
+    {% staticlink css:tastytools/api.howto %}
 
     <script type='text/javascript'>
         $(document).ready(function(){

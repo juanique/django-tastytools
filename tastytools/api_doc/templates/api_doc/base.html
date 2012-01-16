@@ -1,11 +1,11 @@
-{% load link %}
+{% load staticlink %}
 <!DOCTYPE HTML>
 <html>
     <head>
-        {% link js:tastytools/lib/jquery-1.7.1.js %}
-        {% link js:tastytools/lib/underscore %}
-        {% link js:tastytools/lib/backbone %}
-        {% link css:tastytools/style %}
+        {% staticlink js:tastytools/lib/jquery-1.7.1.js %}
+        {% staticlink js:tastytools/lib/underscore %}
+        {% staticlink js:tastytools/lib/backbone %}
+        {% staticlink css:tastytools/style %}
 
         {% block extra_head %}
         {% endblock %}

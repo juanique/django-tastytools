@@ -1,15 +1,15 @@
 {% extends "api_doc/base.html" %}
-{% load link %}
+{% load staticlink %}
 
 {% block extra_head %}
-    {% link js:tastytools/lib/SyntaxHighlighter/shCore.js %}
-    {% link js:tastytools/lib/SyntaxHighlighter/shBrushJScript.js %}
+    {% staticlink js:tastytools/lib/SyntaxHighlighter/shCore.js %}
+    {% staticlink js:tastytools/lib/SyntaxHighlighter/shBrushJScript.js %}
 
-    {% link css:tastytools/lib/SyntaxHighlighter/shCore.css %}
-    {% link css:tastytools/lib/SyntaxHighlighter/shThemeDefault %}
+    {% staticlink css:tastytools/lib/SyntaxHighlighter/shCore.css %}
+    {% staticlink css:tastytools/lib/SyntaxHighlighter/shThemeDefault %}
 
-    {% link js:tastytools/api.doc %}
-    {% link css:tastytools/api.doc %}
+    {% staticlink js:tastytools/api.doc %}
+    {% staticlink css:tastytools/api.doc %}
 
     <style type='text/css'>
 
