@@ -92,6 +92,12 @@ class ModelResource(TastyModelResource):
                     'POST': self._meta.example.post,
                     'GET': self._meta.example.get
             }
+
+            requested_type = request.GET.get('type', 'False')
+            try:
+                output = output[requested_type.upper()]
+            except KeyError:
+                pass
             response_class = HttpResponse
         else:
             output = {
