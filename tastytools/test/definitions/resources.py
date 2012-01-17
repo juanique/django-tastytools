@@ -1,7 +1,6 @@
-from klooff.test import MultiTestCase, create_multi_meta
 from django.test import TestCase
-from tastytools.test.client import Client
 from tastytools.test.resources import TestData
+from tastytools.test.client import Client, MultiTestCase, create_multi_meta
 
 
 def generate(api):
