@@ -85,7 +85,9 @@ class ResourceTestData(object):
             for value in values:
                 getattr(model, m2m_field).add(value)
 
+        data.set_related(model)
         return model
+
 
     @property
     def sample_data(self):
@@ -102,6 +104,7 @@ class TestData(object):
         self.force = force or {}
         self.related = related
         self.data = {}
+        self.related_data = []
 
     def __getitem__(self, name):
         return self.data[name]
@@ -118,8 +121,25 @@ class TestData(object):
     def to_dict(self):
         return self.data
 
+    def set_related(self, obj):
+
+        for args in self.related_data:
+            args['force'] = {args['related_name'] : obj}
+            del args['related_name']
+            self.set(**args)
+
     def set(self, name, constant=None, resource=None, count=None,
-        force=False):
+        force=False, related_name=False):
+
+        if related_name:
+            self.related_data.append({
+                'name' : name,
+                'constant' : constant,
+                'resource' : resource,
+                'count' : count,
+                'related_name' : related_name
+            })
+            return
 
         value = None
         force = force or {}

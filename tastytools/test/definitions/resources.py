@@ -7,6 +7,12 @@ def generate(api):
     class UnderResources(MultiTestCase):
 
         @staticmethod
+        def multi_create_test_resource_unicity(self, resource_name, resource):
+            resource.create_test_resource()
+            all_resources = resource._meta.object_class.objects.all()
+            self.assertEqual(1, len(all_resources))
+
+        @staticmethod
         def multi_create_test_resource(self, resource_name, resource):
             #only if resource allows detail GET
             if 'GET' not in resource._meta.detail_allowed_methods:

@@ -72,6 +72,48 @@ class CommentTestData(ResourceTestData):
         return data
     </pre>
 
+    <h2>Avoiding extra data generation in circular references</h2>
+    <p>Say that you are generating your tests data for your blog post model, you may
+       want to generate some comments as well, so the test post won't look so lonely
+       all by itself.<p>
+    <p>But take a look at our sample data generator funcion for the comments. If you've
+       been paying attention, you'll notice that it generates a parent post on its own,
+       which will in turn call the posts' own data generator function, and create yet
+       <strong>another</strong> post.
+
+    <p>This circular dependency issue is easily resolved when creating comments, because
+    the generated parent post is forced to be comment-less on creation, thus avoiding
+    the comments' generator function to be called again.<p>
+
+    <p>However, when creating the test post, it would need to pass itself as the parent
+    for the newly created comments, which cannot be done since the actual model doesn't
+    exist yet.</p>
+
+    <p>To solve this, it suffices to specify the <strong>related_name</strong> parameter,
+    which indicates the reverse relation between the two models. Any related resource
+    set with this parameter will be created after the test resources has been saved,
+    and its related attribute will be forced to be the current model being created.</p>
+
+    <pre class='brush: py, highlight: [15]'>
+from tastytools.test.resources import ResourceTestData, Related, TestData
+
+class PostTestData(ResourceTestData):
+
+    def __init__(self, api):
+        ResourceTestData.__init__(self, api, 'post')
+
+    def sample_data(self, related=Related.Model, force=False):
+        data = TestData(self.api, force, related)
+
+        data.set('title', 'The best day ever.')
+        data.set('author', resource='user')
+        data.set('published', '2010-12-24T06:23:48')
+        data.set('content', 'Lorem ipsum...')
+        data.set('comments', resource='comment', count=5, related_name='post')
+
+        return data
+    </pre>
+
     <h2>Defining resources</h2>
     <pre class='brush: py, highlight: [1, 26]'>
 from tastytools.resources import ModelResource
@@ -107,7 +149,7 @@ class CommentResource(ModelResource):
 
     <h2>Setting up urls</h2>
     <p>File <strong>/api/urls.py</strong></p>
-    <pre class='brush: py, highlight: [1, 26]'>
+    <pre class='brush: py, highlight: [2]'>
 from django.conf.urls.defaults import patterns, include, url
 from api.application import api
 
