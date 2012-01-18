@@ -1,4 +1,4 @@
-{% extends "api_doc/base.html" %}
+{% extends "tastytools/base.html" %}
 {% load staticlink %}
 
 {% block extra_head %}
@@ -27,18 +27,13 @@
     <p>File <strong>/api/application.py</strong></p>
     <pre class='brush: py'>
 from tastytools.api import Api
-from resources import CommentResource
+from resources import CommentResource, AnotherResource, YetAnotherResource
+import other_resources
 
-class MessageBoardApi(Api):
-
-    def __init__(self):
-        resources = [CommentResource]
-        api_name = 'resources'
-
-        super(ApplicationApi, self).__init__(resources=resources,
-            api_name=api_name)
-
-api = MessageBoardApi()
+api = Api()
+api.register(CommentResource)
+api.register(resources=[AnotherResource, YetAnotherResource])
+api.register(modules=[other_resources])
     </pre>
 
     <h2>Adding Automatic tests</h2>
@@ -147,16 +142,25 @@ class CommentResource(ModelResource):
         excludes = ['id']
     </pre>
 
-    <h2>Setting up urls</h2>
-    <p>File <strong>/api/urls.py</strong></p>
+    <h2>TastyTools Documentation</h2>
+    <p>In order to enable: <code>/tastytools/doc</code> and <code>/tastytools/howto</code> on your site:</p>
+    <p>File <strong>/your/project/settings.py</strong></p>
+    <pre class='brush: py, highlight: [2]'>
+    INSTALLED_APPS = (
+      ...
+      'tastytools',
+    )
+    </pre>
+    
+    <p>File <strong>/your/project/urls.py</strong></p>
     <pre class='brush: py, highlight: [2]'>
 from django.conf.urls.defaults import patterns, include, url
-from api.application import api
+
+api_name = '{{api_name}}' # OR WHATEVER YOUR API'S NAME IS
 
 urlpatterns = patterns('',
-        (r'^api/doc/$', 'tastytools.api_doc.views.doc'),
-        (r'^api/howto/$', 'tastytools.api_doc.views.howto'),
-        (r'^api/', include(api.urls)),
+        ...
+        (r'^tastytools', include('tastytools.urls'), {'api_name': api_name}),
 )
     </pre>
 

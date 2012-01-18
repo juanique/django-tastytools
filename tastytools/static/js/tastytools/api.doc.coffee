@@ -142,7 +142,8 @@ class ResourceView extends Backbone.View
 
 
 class ResourceList extends Backbone.Model
-  url : "/api/resources/"
+  url : ()->
+      return window.api_url
 
 
 class ResourceListView extends Backbone.View

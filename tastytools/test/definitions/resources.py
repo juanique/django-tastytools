@@ -58,7 +58,7 @@ def generate(api):
             #We use an authenticated client for testing POST
             client = Client()
             passwd = "OLDKGAS$AFAG"
-            profile_res = api.resources['userprofile']
+            profile_res = api.resource('userprofile')
             profile = profile_res.create_test_resource(
                 {'password': passwd})
             self.assertTrue(client.login(username=profile[1].email,

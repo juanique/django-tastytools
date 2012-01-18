@@ -68,7 +68,7 @@ def generate(api):
                 bad_value = UnderResourceFields.generate_field_test_data(field)
 
                 #authenticate to be allowed to modify the resource
-                post_data = api.resources['userprofile'].get_test_post_data()
+                post_data = api.resource('userprofile').get_test_post_data()
                 client.login(username=post_data['email'],
                     password=post_data['password'])
 
@@ -88,7 +88,7 @@ def generate(api):
         @staticmethod
         def generate_arguments():
             args = []
-            for resource_name, resource in api.resources.items():
+            for resource_name, resource in api._registry.items():
                 for field_name, field in resource.fields.items():
                     args.append((resource_name, resource, field_name, field))
 
