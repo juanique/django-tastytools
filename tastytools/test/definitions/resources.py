@@ -127,7 +127,7 @@ def generate(api):
         @staticmethod
         def generate_arguments():
             args = []
-            for resource_name, resource in api.resources.items():
+            for resource_name, resource in api._registry.items():
                 args.append((resource_name, resource))
             return args
 
