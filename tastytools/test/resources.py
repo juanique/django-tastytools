@@ -23,7 +23,7 @@ class ResourceTestData(object):
 
         self.api = api
         if type(resource) is str:
-            resource = self.api.resources[resource]
+            resource = self.api.resource(resource)
         self.resource = resource
 
     @property
@@ -170,7 +170,7 @@ class TestData(object):
         force=False):
         force = force or {}
 
-        resource = self.api.resources[resource_name]
+        resource = self.api.resource(resource_name)
 
         (uri, res) = resource.create_test_resource(force)
 

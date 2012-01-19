@@ -1,8 +1,47 @@
-from django.test import TestCase
-from tastytools.validation import FieldsValidation
+from django.utils import unittest
+from django.test.client import RequestFactory
+from api import Api
+from example import resources1, resources2, resources3
+from validation import FieldsValidation
 
 
-class FieldsValidationTest(TestCase):
+class ApiTestCase(unittest.TestCase):
+
+    def setUp(self):
+
+        resources = [resources1.Test_1_2_Resource, resources1.Test_1_3_Resource()]
+        modules = [resources2, resources3]
+
+        self.api = Api()
+        self.api.register(resources1.Test_1_1_Resource())
+        self.api.register(resources=resources)
+        self.api.register(modules=modules)
+        #self.factory = RequestFactory()
+        #self.request = self.factory.get("")
+        
+    def _assert_in_registry(self, resource_names):
+        for resource_name in resource_names:
+            try:
+                assert resource_name in self.api._registry 
+            except:
+                print resource_name
+                raise
+
+    def test_resource_importing(self):
+        """The Api class is able to import a single resource"""
+        self._assert_in_registry(["test_1_1"])
+
+    def test_resource_list_importing(self):
+        """The Api class is able to import a list of resources"""
+        self._assert_in_registry(["test_1_2", "test_1_3"])
+        
+    def test_module_list_importing(self):
+        """The Api class is able to import all resources from listed modules"""
+        self._assert_in_registry(["test_2_1", "test_2_2", "test_2_3"])
+        self._assert_in_registry(["test_3_1", "test_3_2", "test_3_3"])
+
+
+class FieldsValidationTest(unittest.TestCase):
     def test_parse_methods_key(self):
         validation = FieldsValidation()
         key = "required_post"

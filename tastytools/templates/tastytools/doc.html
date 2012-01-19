@@ -1,7 +1,11 @@
-{% extends "api_doc/base.html" %}
+{% extends "tastytools/base.html" %}
 {% load staticlink %}
 
 {% block extra_head %}
+    <script type="text/javascript">
+      window.api_url = '{{api_url}}';
+    </script>
+
     {% staticlink js:tastytools/lib/SyntaxHighlighter/shCore.js %}
     {% staticlink js:tastytools/lib/SyntaxHighlighter/shBrushJScript.js %}
 
