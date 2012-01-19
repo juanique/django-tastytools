@@ -63,7 +63,8 @@ def generate(api):
         @staticmethod
         def multi_example_post_data(self, resource_name, resource):
             #We use an authenticated client for testing POST
-            user = User.objects.create_user('john', 'lennon@beatles.com', 'pass')
+            user = User.objects.create_user('john', 'lennon@beatles.com',
+                'pass')
             user.save()
             client = Client()
             self.assertTrue(client.login(username='john',
