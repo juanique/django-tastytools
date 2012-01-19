@@ -38,6 +38,12 @@ def generate(api):
             #Check existence
             for method in ['POST', 'GET']:
                 try:
+                    if not hasattr(resource._meta, 'example'):
+                        msg = "Missing example data for resource: %s "\
+                            "Did you forget to set %s.Meta.example_class?"
+                        msg %= (resource_name, resource.__class__.__name__)
+                        self.assertTrue(False, msg)
+
                     if api.resource_allows_method(resource_name, method):
                         example = getattr(resource._meta.example,
                             method.lower())
