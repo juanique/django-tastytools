@@ -1,5 +1,6 @@
 from tastypie.api import Api as TastyApi
 from tastypie.resources import Resource as TastyResource, ModelResource as TastyModelResource
+from tastytools.resources import ModelResource as ToolsResource
 import json
 import inspect
 
@@ -8,7 +9,11 @@ def _resources_from(module):
     for name in dir(module):
         o = getattr(module, name)
         try:
-            if (o != TastyResource) and (o != TastyModelResource) and issubclass(o, TastyResource):
+            base_classes = [ToolsResource, TastyResource, TastyModelResource]
+            is_base_class = o in base_classes
+            is_resource_class =  issubclass(o, TastyResource)
+
+            if is_resource_class and not is_base_class:
                 yield o
         except TypeError: pass
 
@@ -31,11 +36,14 @@ class Api(TastyApi):
         for resource in resource_list:
             if inspect.isclass(resource):
                 resource = resource()
+            
+            super(Api, self).register(resource, canonical)        
+
             try:
+                pass
                 resource._meta.example = resource._meta.example_class(self)
             except AttributeError:
                 pass
-            super(Api, self).register(resource, canonical)        
         
     def get_resource_example_data(self, resource_name, method):
         return getattr(self.resource(resource_name)._meta.example,
