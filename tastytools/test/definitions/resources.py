@@ -1,6 +1,7 @@
 from django.test import TestCase
 from tastytools.test.resources import TestData
 from tastytools.test.client import Client, MultiTestCase, create_multi_meta
+from django.contrib.auth.models import User
 
 
 def generate(api):
@@ -56,13 +57,11 @@ def generate(api):
         @staticmethod
         def multi_example_post_data(self, resource_name, resource):
             #We use an authenticated client for testing POST
+            user = User.objects.create_user('john', 'lennon@beatles.com', 'pass')
+            user.save()
             client = Client()
-            passwd = "OLDKGAS$AFAG"
-            profile_res = api.resource('userprofile')
-            profile = profile_res.create_test_resource(
-                {'password': passwd})
-            self.assertTrue(client.login(username=profile[1].email,
-                password=passwd))
+            self.assertTrue(client.login(username='john',
+                password='pass'))
 
             #Test POST
             if resource.can_create():
