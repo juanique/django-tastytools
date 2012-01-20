@@ -9,6 +9,92 @@ class Related(object):
     Uri = "URI"
     Full = "FULL"
 
+class TestData(object):
+
+    def __init__(self, api, force, related):
+        self.api = api
+        self.force = force or {}
+        self.related = related
+        self.data = {}
+        self.related_data = []
+
+    def __getitem__(self, name):
+        return self.data[name]
+
+    def __setitem__(self, name, value):
+        self.data[name] = value
+
+    def __delitem__(self, name):
+        del self.data[name]
+
+    def update(self, data):
+        return self.data.update(data)
+
+    def to_dict(self):
+        return self.data
+
+    def set_related(self, obj):
+
+        for args in self.related_data:
+            args['force'] = {args['related_name'] : obj}
+            del args['related_name']
+            self.set(**args)
+
+    def set(self, name, constant=None, resource=None, count=None,
+        force=False, related_name=False):
+
+        if related_name:
+            self.related_data.append({
+                'name' : name,
+                'constant' : constant,
+                'resource' : resource,
+                'count' : count,
+                'related_name' : related_name
+            })
+            return
+
+        value = None
+        force = force or {}
+
+        if name in self.force:
+            value = self.force[name]
+        elif resource is not None:
+            if count > 0:
+                value = []
+                while count > 0:
+                    res = self.create_test_data(resource,
+                        related=self.related, force=force)
+                    value.append(res)
+                    count -= 1
+            else:
+                value = self.create_test_data(resource,
+                    related=self.related, force=force)
+        elif constant is not None:
+            value = constant
+        else:
+            raise Exception("Expected resource or constant")
+
+        self.data[name] = value
+
+        return value
+
+    def create_test_data(self, resource_name, related=Related.Model,
+        force=False):
+        force = force or {}
+
+        resource = self.api.resource(resource_name)
+
+        (uri, res) = resource.create_test_resource(force)
+
+        if related == Related.Uri:
+            return uri
+        elif related == Related.Model:
+            return res
+        elif related == Related.Full:
+            return self.api.dehydrate(resource=resource_name, obj=res)
+
+        raise Exception("Missing desired related type. Given: %s" % related)
+
 
 class ResourceTestData(object):
 
@@ -95,90 +181,3 @@ class ResourceTestData(object):
         interacting with the resource'''
 
         return {}
-
-
-class TestData(object):
-
-    def __init__(self, api, force, related):
-        self.api = api
-        self.force = force or {}
-        self.related = related
-        self.data = {}
-        self.related_data = []
-
-    def __getitem__(self, name):
-        return self.data[name]
-
-    def __setitem__(self, name, value):
-        self.data[name] = value
-
-    def __delitem__(self, name):
-        del self.data[name]
-
-    def update(self, data):
-        return self.data.update(data)
-
-    def to_dict(self):
-        return self.data
-
-    def set_related(self, obj):
-
-        for args in self.related_data:
-            args['force'] = {args['related_name'] : obj}
-            del args['related_name']
-            self.set(**args)
-
-    def set(self, name, constant=None, resource=None, count=None,
-        force=False, related_name=False):
-
-        if related_name:
-            self.related_data.append({
-                'name' : name,
-                'constant' : constant,
-                'resource' : resource,
-                'count' : count,
-                'related_name' : related_name
-            })
-            return
-
-        value = None
-        force = force or {}
-
-        if name in self.force:
-            value = self.force[name]
-        elif resource is not None:
-            if count > 0:
-                value = []
-                while count > 0:
-                    res = self.create_test_data(resource,
-                        related=self.related, force=force)
-                    value.append(res)
-                    count -= 1
-            else:
-                value = self.create_test_data(resource,
-                    related=self.related, force=force)
-        elif constant is not None:
-            value = constant
-        else:
-            raise Exception("Expected resource or constant")
-
-        self.data[name] = value
-
-        return value
-
-    def create_test_data(self, resource_name, related=Related.Model,
-        force=False):
-        force = force or {}
-
-        resource = self.api.resource(resource_name)
-
-        (uri, res) = resource.create_test_resource(force)
-
-        if related == Related.Uri:
-            return uri
-        elif related == Related.Model:
-            return res
-        elif related == Related.Full:
-            return self.api.dehydrate(resource=resource_name, obj=res)
-
-        raise Exception("Missing desired related type. Given: %s" % related)

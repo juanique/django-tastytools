@@ -14,13 +14,6 @@ setup(
     package_data={
         'tastytools' : [
             '*.*',
-            'api_doc/static/js/tastytools/*.*',
-            'api_doc/static/js/tastytools/lib/*.*',
-            'api_doc/static/js/tastytools/lib/SyntaxHighlighter/*.*',
-            'api_doc/static/css/tastytools/*.*',
-            'api_doc/static/css/tastytools/lib/*.*',
-            'api_doc/static/css/tastytools/lib/SyntaxHighlighter/*.*',
-            'api_doc/templates/api_doc/*',
         ]
     },
     long_description="Tools for django-tastypie autotesting and documentation.",
