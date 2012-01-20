@@ -109,6 +109,81 @@ class PostTestData(ResourceTestData):
         return data
     </pre>
 
+    <h2>Using named test data sets</h2>
+    <p>You may run into the situation where you need the ability to create
+      anonymous distinct test data for a given resource but also be able to 
+      refer to a known and consistent test data object.
+    </p>
+    <p>A good example is a user model. You probably want the test data to be 
+      able to create several users for some tests, but you want to have 
+      certain resources refer to the logged in user for authorized access
+    </p>
+    <p>The snippets below show how this can be achieved by using test data 
+      ids. They assume a case where there is a resource named Group, and where 
+      only the Group's owner (a User instance) is able to GET it, based on 
+      the authenticated user in the GET request.</p>
+    <p>File <strong>/your/api/resources.py</strong></p>
+    <p><em>The user test data acknowledges a special id "session" and provides
+      a consistent object for it. Other anonymous objects have a simple
+      incremental-based username created (they will all be different users)
+    </em></p>
+    <pre class='brush: py'>
+      class UserTestData(ResourceTestData):
+          resource ='user'
+
+          def get_data(self, data):
+              global user_counter
+              if data.id == 'session':
+                  suffix = ''
+              else:
+                  user_counter += 1
+                  suffix = '%02d' % user_counter
+
+              username = 'tester%s' % suffix
+
+              data.set('username', username)
+              data.set('password', "sha1$test$%s" % get_hexdigest('sha1', 'test', username))
+              data.set('email', 'tester@localhost')
+              return data
+    </pre>
+    <p>File <strong>/your/api/resources.py</strong></p>
+    <p><em>All group test objects will belong to the "session" user defined 
+      above. This is achieved by tagging the related owner user with the 
+      "session" id.
+    </em></p>
+    <pre class='brush: py'>
+      class GroupTestData(ResourceTestData):
+          resource = "pool"
+
+          def get_data(self, data):
+              data.set('owner', resource='user', id="session")
+              data.set('name', 'Test' )
+              return data
+    </pre>
+    <p>File <strong>/your/api/tests.py</strong></p>
+    <p><em>Finally we provide a setup function to be called before running each 
+      generated test. The setup function logs in the test client using the
+      credentials for the "session" user. It is expecting that the user's 
+      password will be the same as its username.</em></p>
+    <pre class='brush: py'>
+      from tastytools.test.definitions import resources, fields
+      from . import api
+      from django.contrib.auth.models import User
+
+      def setUp(self, *args, **kwargs):
+          uri, user = api.resource('user').create_test_resource(id='session')
+          self.assertTrue(self.client.login(
+              username=user.username, 
+              password=user.username
+              ),
+              "Could not login as %s/%s" % (user.username, user.username)
+          )
+
+      ResourceTests =   resources.generate(api, setUp=setUp)
+      ResourceFieldTests = fields.generate(api, setUp=setUp)
+    </pre>
+
+
     <h2>Defining resources</h2>
     <pre class='brush: py, highlight: [1, 26]'>
 from tastytools.resources import ModelResource

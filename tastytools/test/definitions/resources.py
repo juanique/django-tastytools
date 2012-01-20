@@ -4,14 +4,21 @@ from tastytools.test.client import Client, MultiTestCase, create_multi_meta
 from django.contrib.auth.models import User
 
 
-def generate(api):
+def generate(api, setUp=None):
+    if setUp is None:
+        def user_setUp(*args, **kwargs):
+            return
+    else:
+        user_setUp = setUp
+        
     class UnderResources(MultiTestCase):
 
         @staticmethod
         def multi_create_test_resource_unicity(self, resource_name, resource):
+            initial_count = len(resource._meta.object_class.objects.all())
             resource.create_test_resource()
-            all_resources = resource._meta.object_class.objects.all()
-            self.assertEqual(1, len(all_resources))
+            final_count = len(resource._meta.object_class.objects.all())
+            self.assertEqual(initial_count+1, final_count)
 
         @staticmethod
         def multi_create_test_resource(self, resource_name, resource):
@@ -62,39 +69,31 @@ def generate(api):
 
         @staticmethod
         def multi_example_post_data(self, resource_name, resource):
-            #We use an authenticated client for testing POST
-            user = User.objects.create_user('john', 'lennon@beatles.com', 'pass')
-            user.save()
-            client = Client()
-            self.assertTrue(client.login(username='john',
-                password='pass'))
 
-            #Test POST
             if resource.can_create():
                 post_data = resource.get_test_post_data()
 
-                post_response = client.post(resource.get_resource_list_uri(),
+                post_response = self.client.post(resource.get_resource_list_uri(),
                     post_data)
 
                 msg = "Failed to POST example data for resource "\
                     "S: %s. R(%s): %s"
-                msg %= (post_data, post_response.status_code,
-                        post_response.content)
+                msg %= (post_response.status_code,
+                        post_response.content, post_data)
                 self.assertEqual(post_response.status_code, 201, msg)
 
         @staticmethod
         def multi_example_get_data(self, resource_name, resource):
 
-            #only if resource allows detail GET
-            if 'get' not in resource._meta.detail_allowed_methods:
-                return
-
-            client = Client()
             if api.resource_allows_method(resource_name, 'GET'):
                 uri, res = resource.create_test_resource()
-                get_response = client.get(uri, parse='json')
+                get_response = self.client.get(uri, parse='json')
                 self.assertEqual(200, get_response.status_code,
-                    get_response.data)
+                    "Location: %s\nResponse (%s):\n%s" % (
+                        uri, 
+                        get_response.status_code,
+                        get_response.data
+                ))
                 response_dict = get_response.data
 
                 object_keys = set(response_dict.keys())
@@ -139,8 +138,16 @@ def generate(api):
         @staticmethod
         def generate_test_name(resource_name, resource):
             return resource_name
+            
+        @staticmethod
+        def setUp(self, *args, **kwargs):
+            self.client = Client()
+            user_setUp(self, *args, **kwargs)
 
+    
     class TestResources(TestCase):
         __metaclass__ = create_multi_meta(UnderResources)
+
+
 
     return TestResources
