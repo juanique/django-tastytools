@@ -134,6 +134,10 @@ class Client(DjangoClient):
 
 
 class MultiTestCase(object):
+    
+    def setUp(self):
+        print "setup"
+        pass
 
     @staticmethod
     def generate_arguments():
@@ -169,6 +173,7 @@ def create_multi_meta(multi_class):
                     '''The genereated test function.'''
 
                     multitest = multi_class()
+                    multitest.setUp(self, *args)
                     getattr(multitest, test)(self, *args)
 
                 return test_func

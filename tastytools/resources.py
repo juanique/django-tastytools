@@ -1,4 +1,4 @@
-from tastypie.resources import ModelResource as TastyModelResource
+from tastypie.resources import Resource, ModelResource as TastyModelResource
 from django.conf.urls.defaults import url
 from tastypie import fields
 from test.resources import TestData
@@ -54,6 +54,16 @@ class ModelResource(TastyModelResource):
                 getattr(self, func)(bundle, related_objs)
             else:
                 related_mngr.add(*related_objs)
+                
+    def can_patch(self):
+        """
+        Checks to ensure ``patch`` is within ``allowed_methods``.
+
+        Used when hydrating related data.
+        """
+        allowed = set(self._meta.list_allowed_methods + self._meta.detail_allowed_methods)
+        return 'patch' in allowed
+    
 
     def override_urls(self):
         urlexp = r'^(?P<resource_name>%s)/example/'
