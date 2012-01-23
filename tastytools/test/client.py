@@ -77,7 +77,7 @@ class Client(DjangoClient):
         return response
 
     def post(self, path, data=None, content_type='application/json',
-        follow=False, parse=None, **extra):
+        follow=False, parse='json', **extra):
         """
         Overloads default Django client POST request to setdefault content
         type to applcation/json and automatically sets data to a raw json
@@ -116,14 +116,23 @@ class Client(DjangoClient):
 
         return super(Client, self).put(path, data, content_type, **extra)
 
-    def get(self, path, data=None, follow=False, parse=None, **extra):
+    def delete(self, path, follow=False, obj=None, **extra):
+        """
+        Overloads default Django client DELETE request to setdefault content type
+        to applcation/json and automatically sets data to a raw json string.
+        """
+
+        path = self._path_or_resource(path, obj)
+        return super(Client, self).delete(path, **extra)
+
+    def get(self, path, data=None, follow=False, parse='json', obj=None, **extra):
         """
         Overloads default Django client GET request to receive a parse
         parameter. When parse='json', the server's response is parsed using
         simplejson and loaded into request.data.
         """
         
-        path = self._path_or_resource(path, data)
+        path = self._path_or_resource(path, obj)
         data = data or {}
         response = super(Client, self).get(path, data, follow, **extra)
 
