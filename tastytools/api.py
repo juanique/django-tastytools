@@ -40,10 +40,11 @@ class Api(TastyApi):
             super(Api, self).register(resource, canonical)        
 
             try:
-                pass
                 resource._meta.example = resource._meta.example_class(self)
-            except AttributeError:
-                pass
+            except AttributeError as e:
+                msg = "%s: Did you forget to define the example class for %s?"
+                msg %= (e, resource.__class__.__name__)
+                raise Exception(msg)
         
     def get_resource_example_data(self, resource_name, method):
         return getattr(self.resource(resource_name)._meta.example,
