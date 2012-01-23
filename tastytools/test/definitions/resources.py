@@ -10,7 +10,7 @@ def generate(api, setUp=None):
             return
     else:
         user_setUp = setUp
-        
+
     class UnderResources(MultiTestCase):
 
         @staticmethod
@@ -18,7 +18,7 @@ def generate(api, setUp=None):
             initial_count = len(resource._meta.object_class.objects.all())
             resource.create_test_resource()
             final_count = len(resource._meta.object_class.objects.all())
-            self.assertEqual(initial_count+1, final_count)
+            self.assertEqual(initial_count + 1, final_count)
 
         @staticmethod
         def multi_create_test_resource(self, resource_name, resource):
@@ -68,17 +68,12 @@ def generate(api, setUp=None):
                     self.assertTrue(False, message)
 
         @staticmethod
-        def multi_example_post_data(self, resource_name, resource):
-            #TODO find a better solution for user permissions
-            User.objects.create_user(username='john', password='lennon',
-                email='john@lennon.com')
-            self.client.login(username='john', password='lennon')
-
+        def multi_test_post(self, resource_name, resource):
             if resource.can_create():
                 post_data = resource.get_test_post_data()
 
-                post_response = self.client.post(resource.get_resource_list_uri(),
-                    post_data)
+                post_response = self.client.post(
+                    resource.get_resource_list_uri(), post_data)
 
                 msg = "Failed to POST example data for resource "\
                     "S: %s. R(%s): %s"
@@ -87,14 +82,14 @@ def generate(api, setUp=None):
                 self.assertEqual(post_response.status_code, 201, msg)
 
         @staticmethod
-        def multi_example_get_data(self, resource_name, resource):
+        def multi_test_get(self, resource_name, resource):
 
             if api.resource_allows_method(resource_name, 'GET'):
                 uri, res = resource.create_test_resource()
                 get_response = self.client.get(uri, parse='json')
                 self.assertEqual(200, get_response.status_code,
                     "Location: %s\nResponse (%s):\n%s" % (
-                        uri, 
+                        uri,
                         get_response.status_code,
                         get_response.data
                 ))
@@ -142,16 +137,17 @@ def generate(api, setUp=None):
         @staticmethod
         def generate_test_name(resource_name, resource):
             return resource_name
-            
-        @staticmethod
-        def setUp(self, *args, **kwargs):
-            self.client = Client()
-            user_setUp(self, *args, **kwargs)
 
-    
+        @staticmethod
+        def setUp(self, test, resource_name, resource):
+            test_name = test.__name__
+            func_name = test_name.replace("multi_", "setup_")
+            self.client = Client()
+            if hasattr(resource._meta.example, func_name):
+                getattr(resource._meta.example, func_name)(self)
+            user_setUp(self, test_name, resource_name, resource)
+
     class TestResources(TestCase):
         __metaclass__ = create_multi_meta(UnderResources)
-
-
 
     return TestResources

@@ -173,7 +173,7 @@ def create_multi_meta(multi_class):
                     '''The genereated test function.'''
 
                     multitest = multi_class()
-                    multitest.setUp(self, *args)
+                    multitest.setUp(self, getattr(multitest, test), *args)
                     getattr(multitest, test)(self, *args)
 
                 return test_func
