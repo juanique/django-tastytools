@@ -5,6 +5,7 @@ from django.test.client import encode_multipart, FakePayload
 from django.utils.http import urlencode
 from django.utils import simplejson
 from urlparse import urlparse
+from tastypie.resources import Resource
 
 
 class Client(DjangoClient):
@@ -13,6 +14,19 @@ class Client(DjangoClient):
 
     def __init__(self, *args, **kwargs):
         super(Client, self).__init__(*args, **kwargs)
+        
+    
+    def _path_or_resource(self, path, obj=None):
+        '''If passed a Resource object, will return its URI.
+           If passed a path, will return the path unmodified'''
+
+        if isinstance(path, Resource):
+           if obj is not None:
+               return path.get_resource_uri(obj)
+           else:
+                return path.get_resource_list_uri()
+        else:
+           return path
 
     def patch_request(self, path, data=False,
         content_type=MULTIPART_CONTENT, **extra):
@@ -43,14 +57,15 @@ class Client(DjangoClient):
         request_params.update(extra)
         return self.request(**request_params)
 
-    def patch(self, path, data=False, follow=False,
+    def patch(self, path, data=None, follow=False,
         content_type="application/json", **extra):
         """
         Send a resource patch to the server using PATCH.
         """
-
+        
         data = data or {}
-
+        path = self._path_or_resource(path, data)
+        
         if type(data) == dict and content_type == "application/json":
             data = simplejson.dumps(data, cls=json.DjangoJSONEncoder)
 
@@ -61,7 +76,7 @@ class Client(DjangoClient):
             response = self._handle_redirects(response, **extra)
         return response
 
-    def post(self, path, data=False, content_type='application/json',
+    def post(self, path, data=None, content_type='application/json',
         follow=False, parse=None, **extra):
         """
         Overloads default Django client POST request to setdefault content
@@ -69,6 +84,7 @@ class Client(DjangoClient):
         string.
         """
 
+        path = self._path_or_resource(path)
         data = data or {}
 
         if type(data) == dict and content_type == "application/json":
@@ -85,13 +101,14 @@ class Client(DjangoClient):
 
         return response
 
-    def put(self, path, data=False, content_type='application/json',
+    def put(self, path, data=None, content_type='application/json',
         follow=False, **extra):
         """
         Overloads default Django client PUT request to setdefault content type
         to applcation/json and automatically sets data to a raw json string.
         """
 
+        path = self._path_or_resource(path, data)
         data = data or {}
 
         if type(data) == dict:
@@ -99,13 +116,14 @@ class Client(DjangoClient):
 
         return super(Client, self).put(path, data, content_type, **extra)
 
-    def get(self, path, data=False, follow=False, parse=None, **extra):
+    def get(self, path, data=None, follow=False, parse=None, **extra):
         """
         Overloads default Django client GET request to receive a parse
         parameter. When parse='json', the server's response is parsed using
         simplejson and loaded into request.data.
         """
-
+        
+        path = self._path_or_resource(path, data)
         data = data or {}
         response = super(Client, self).get(path, data, follow, **extra)
 
