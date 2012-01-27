@@ -54,6 +54,11 @@ class Api(TastyApi):
         options = self.resource(resource_name)._meta
         allowed = set(options.allowed_methods + options.detail_allowed_methods)
         return method.lower() in allowed
+    
+    def resource_allows_detail(self, resource_name, method):
+        options = self.resource(resource_name)._meta
+        return method.lower() in options.detail_allowed_methods
+        
 
     def dehydrate(self, resource, obj, request=None):
         if type(resource) is str:

@@ -83,9 +83,9 @@ def generate(api, setUp=None):
                 self.assertEqual(post_response.status_code, 201, msg)
 
         @staticmethod
-        def multi_example_get_data(self, resource_name, resource):
+        def multi_example_get_detail(self, resource_name, resource):
 
-            if api.resource_allows_method(resource_name, 'GET'):
+            if api.resource_allows_detail(resource_name, 'GET'):
                 uri, res = resource.create_test_resource()
                 get_response = self.client.get(uri, parse='json')
                 self.assertEqual(200, get_response.status_code,

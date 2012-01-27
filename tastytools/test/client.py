@@ -98,7 +98,6 @@ class Client(DjangoClient):
                 response.data = simplejson.loads(response.content)
             except:
                 response.data = None
-
         return response
 
     def put(self, path, data=None, content_type='application/json',
@@ -142,7 +141,6 @@ class Client(DjangoClient):
             except Exception, error:
                 print error.message
                 response.data = None
-
         return response
 
     def rpc(self, method, **kwargs):
