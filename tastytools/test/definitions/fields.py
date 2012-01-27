@@ -99,7 +99,8 @@ def generate(api, setUp=None):
 #                print resource_name, ":"
                 for field_name, field in resource.fields.items():
 #                    print "   ", field_name, " ", field
-                    args.append((resource_name, resource, field_name, field))
+                    if hasattr(resource._meta, "example_class"):
+                        args.append((resource_name, resource, field_name, field))
 
             return args
 

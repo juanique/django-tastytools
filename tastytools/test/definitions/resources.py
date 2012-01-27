@@ -132,7 +132,8 @@ def generate(api, setUp=None):
         def generate_arguments():
             args = []
             for resource_name, resource in api._registry.items():
-                args.append((resource_name, resource))
+                if hasattr(resource._meta, "example_class"):
+                    args.append((resource_name, resource))
             return args
 
         @staticmethod

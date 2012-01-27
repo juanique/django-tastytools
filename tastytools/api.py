@@ -42,6 +42,7 @@ class Api(TastyApi):
             try:
                 resource._meta.example = resource._meta.example_class(self)
             except AttributeError as e:
+                continue
                 msg = "%s: Did you forget to define the example class for %s?"
                 msg %= (e, resource.__class__.__name__)
                 raise Exception(msg)
