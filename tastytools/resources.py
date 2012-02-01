@@ -54,7 +54,7 @@ class ModelResource(TastyModelResource):
                 getattr(self, func)(bundle, related_objs)
             else:
                 related_mngr.add(*related_objs)
-                
+
     def can_patch(self):
         """
         Checks to ensure ``patch`` is within ``allowed_methods``.
@@ -63,13 +63,18 @@ class ModelResource(TastyModelResource):
         """
         allowed = set(self._meta.list_allowed_methods + self._meta.detail_allowed_methods)
         return 'patch' in allowed
-    
 
     def override_urls(self):
         urlexp = r'^(?P<resource_name>%s)/example/'
         urlexp %= self._meta.resource_name
-        return [url(urlexp, self.wrap_view('get_example_data_view'),
-            name='api_get_example_data')
+
+        urlexp_2 = r'^(?P<resource_name>%s)/doc/'
+        urlexp_2 %= self._meta.resource_name
+        return [
+            url(urlexp, self.wrap_view('get_example_data_view'),
+                name='api_get_example_data'),
+            url(urlexp_2, self.wrap_view('get_doc_data_view'),
+                name='api_get_doc_data'),
         ]
 
     def create_test_resource(self, force=False, *args, **kwargs):
@@ -122,3 +127,25 @@ class ModelResource(TastyModelResource):
 
         return self.create_response(request, output,
             response_class=response_class)
+
+    def get_doc_data_view(self, request, api_name=None,
+        resource_name=None):
+
+            anon_methods = self._meta.authentication.allowed_methods
+            allowed_methods = self._meta.allowed_methods
+            schema = self.build_schema()
+            methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+            authentication_list = {}
+
+            for method in methods:
+                if method.lower() not in allowed_methods:
+                    authentication_list[method.lower()] = 'NOT_ALLOWED'
+                elif method in anon_methods:
+                    authentication_list[method.lower()] = 'ALLOWED'
+                else:
+                    authentication_list[method.lower()] = 'AUTH_REQUIRED'
+
+            schema['auth'] = authentication_list
+            return self.create_response(request, schema)
+
+
