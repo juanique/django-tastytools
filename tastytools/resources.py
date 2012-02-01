@@ -4,6 +4,8 @@ from tastypie import fields
 from test.resources import TestData
 from django.http import HttpResponse
 from tastypie import http
+from tastytools.authentication import AuthenticationByMethod
+from tastypie.authentication import Authentication
 
 
 class ModelResource(TastyModelResource):
@@ -126,8 +128,14 @@ class ModelResource(TastyModelResource):
     def get_doc_data_view(self, request, api_name=None,
         resource_name=None):
 
-            anon_methods = self._meta.authentication.allowed_methods
             allowed_methods = self._meta.allowed_methods
+            if isinstance(self._meta.authentication, AuthenticationByMethod):
+                anon_methods = self._meta.authentication.allowed_methods
+            elif isinstance(self._meta.authentication, Authentication):
+                anon_methods = allowed_methods
+            else:
+                anon_methods = []
+
             schema = self.build_schema()
             methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
             authentication_list = {}
