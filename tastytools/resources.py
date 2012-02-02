@@ -1,11 +1,13 @@
 from tastypie.resources import Resource, ModelResource as TastyModelResource
 from django.conf.urls.defaults import url
-from tastypie import fields
+from tastytools import fields
 from test.resources import TestData
 from django.http import HttpResponse
+from django.utils import simplejson
 from tastypie import http
 from tastytools.authentication import AuthenticationByMethod
 from tastypie.authentication import Authentication
+from tastypie.exceptions import ImmediateHttpResponse
 
 
 class ModelResource(TastyModelResource):
@@ -57,6 +59,14 @@ class ModelResource(TastyModelResource):
             else:
                 related_mngr.add(*related_objs)
 
+    def apply_authorization_limits(self, request, object_list):
+        if request.method in ['PUT','PATCH']:
+            json_data = simplejson.loads(request.raw_post_data)
+            for key in json_data.keys():
+                if key in self.fields.keys() and self.fields[key].final is True:
+                    raise ImmediateHttpResponse(response=http.HttpUnauthorized("Error message"))
+        return object_list
+
     def can_patch(self):
         """
         Checks to ensure ``patch`` is within ``allowed_methods``.
@@ -70,7 +80,7 @@ class ModelResource(TastyModelResource):
         urlexp = r'^(?P<resource_name>%s)/example/'
         urlexp %= self._meta.resource_name
 
-        urlexp_2 = r'^(?P<resource_name>%s)/doc/'
+        urlexp_2 = r'^(?P<resource_name>%s)/schema/'
         urlexp_2 %= self._meta.resource_name
         return [
             url(urlexp, self.wrap_view('get_example_data_view'),
@@ -149,6 +159,8 @@ class ModelResource(TastyModelResource):
                     authentication_list[method.lower()] = 'AUTH_REQUIRED'
 
             schema['auth'] = authentication_list
+            for key, value in schema['fields'].items():
+                schema['fields'][key]['final'] = value.get('final', False)
             return self.create_response(request, schema)
 
 
