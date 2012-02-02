@@ -62,4 +62,14 @@ class TimeField(TastyToolsField, fields.TimeField):
     def __init__(self, *args, **kwargs):
         TastyToolsField.__init__(self, fields.TimeField, *args, **kwargs)
 
+class ForeignKey(ToOneField):
+    pass
 
+class OneToOneField(ToOneField):
+    pass
+
+class ManyToManyField(ToManyField):
+    pass
+
+class OneToManyField(ToManyField):
+    pass
