@@ -1,11 +1,13 @@
-from django.utils import unittest
+from django.test import TestCase
 from django.test.client import RequestFactory
 from api import Api
 from example import resources1, resources2, resources3
 from validation import FieldsValidation
+from test.client import Client
+from models import Test as TestModel
+from django.core.urlresolvers import reverse
 
-
-class ApiTestCase(unittest.TestCase):
+class ApiTestCase(TestCase):
 
     def setUp(self):
 
@@ -40,8 +42,46 @@ class ApiTestCase(unittest.TestCase):
         self._assert_in_registry(["test_2_1", "test_2_2", "test_2_3"])
         self._assert_in_registry(["test_3_1", "test_3_2", "test_3_3"])
 
-
-class FieldsValidationTest(unittest.TestCase):
+class ClientTest(TestCase):
+    
+    urls = 'tastytools.test_urls'
+    
+    def test_urls_are_working(self):
+        self.assertEqual("/test", reverse("test_url"))
+    
+    def test_path_or_resource(self):
+        c = Client()
+        obj = TestModel()
+        obj.test = 'TESTING'
+        obj.save()
+        
+        resource = resources1.Test_1_1_Resource("test")
+        
+        list_path = resource.get_resource_list_uri()
+        object_path = resource.get_resource_uri(obj)
+        
+        result = c._path_or_resource(list_path)
+        expected = list_path
+        self.assertEqual(result, expected, 
+            "Bare path.\nResult:%s\nExpected:%s" % (result, expected))
+            
+        result = c._path_or_resource(list_path, obj)
+        expected = list_path
+        self.assertEqual(result, expected, 
+            "Bare path w/obj.\nResult:%s\nExpected:%s" % (result, expected))
+            
+        result = c._path_or_resource(resource)
+        expected = list_path
+        self.assertEqual(result, expected, 
+            "Empty resource.\nResult:%s\nExpected:%s" % (result, expected))
+            
+        result = c._path_or_resource(resource, obj)
+        expected = object_path
+        self.assertEqual(result, expected, 
+            "Populated resource.\nResult:%s\nExpected:%s" % (result, expected))            
+            
+            
+class FieldsValidationTest(TestCase):
     def test_parse_methods_key(self):
         validation = FieldsValidation()
         key = "required_post"
