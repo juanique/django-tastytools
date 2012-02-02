@@ -91,8 +91,13 @@ class ModelResource(TastyModelResource):
 
     def create_test_resource(self, force=False, *args, **kwargs):
         force = force or {}
-        return self._meta.example.create_test_resource(force=force, *args,
-            **kwargs)
+        try:
+            return self._meta.example.create_test_resource(force=force, *args,
+                **kwargs)
+        except AttributeError as e:
+            msg = "%s: Did you forget to define the example class for %s?"
+            msg %= (e, self.__class__.__name__)
+            raise Exception(msg)
 
     def create_test_model(self, data=None, *args, **kwargs):
         if data is None:

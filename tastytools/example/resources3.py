@@ -1,5 +1,5 @@
 from tastypie.resources import ModelResource
-from models import Test
+from ..models import Test
 
 class Test_3_1_Resource(ModelResource):
     class Meta:

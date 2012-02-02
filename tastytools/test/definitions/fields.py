@@ -23,6 +23,9 @@ def generate(api, setUp=None):
             elif field_classname == "ToManyField":
                 (uri, res) = field.to_class().create_test_resource()
                 return [uri]
+            elif field_classname == "ToOneField":
+                (uri, res) = field.to_class().create_test_resource()
+                return [uri]
             elif field_classname == "DateField":
                 return datetime.now()
             else:
@@ -45,21 +48,21 @@ def generate(api, setUp=None):
 
             if field.readonly and resource.can_create():
                 post_data = resource.get_test_post_data()
-
                 bad_value = UnderResourceFields.generate_field_test_data(field)
                 post_data[field_name] = bad_value
-
                 post_response = self.client.post(resource.get_resource_list_uri(),
                     post_data, parse='json')
 
                 if post_response.status_code == 201:
                     location = post_response['Location']
                     get_response = self.client.get(location, parse='json')
+                    msg ="Could not read posted resource (%d)\n%s"
+                    msg %= (get_response.status_code, get_response.content)
+                    self.assertEqual(get_response.status_code, 200, msg)
 
                     msg = "%s.%s can be set by a POST request even though"\
                         " it's readonly!."
                     msg %= (resource_name, field_name)
-
                     self.assertNotEqual(get_response.get(field_name, ''),
                        bad_value, msg)
 
@@ -96,7 +99,8 @@ def generate(api, setUp=None):
 #                print resource_name, ":"
                 for field_name, field in resource.fields.items():
 #                    print "   ", field_name, " ", field
-                    args.append((resource_name, resource, field_name, field))
+                    if hasattr(resource._meta, "example_class"):
+                        args.append((resource_name, resource, field_name, field))
 
             return args
 
