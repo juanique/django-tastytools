@@ -60,35 +60,37 @@ class ModelResource(TastyModelResource):
                 related_mngr.add(*related_objs)
 
     def apply_authorization_limits(self, request, object_list):
-        if request.method in ['PUT','PATCH']:
+        if request.method in ['PUT', 'PATCH']:
             json_data = simplejson.loads(request.raw_post_data)
             for key in json_data.keys():
-                if key in self.fields.keys() and self.fields[key].final is True:
-                    raise ImmediateHttpResponse(response=http.HttpUnauthorized("Error message"))
-        
+                if key in self.fields.keys() and self.fields[key].final:
+                    response = http.HttpUnauthorized("Error message")
+                    raise ImmediateHttpResponse(response=response)
         return object_list
 
-    def method_request_auth(self, method):
+    def method_requires_auth(self, method):
         if isinstance(self._meta.authentication, AuthenticationByMethod):
             anon_methods = self._meta.authentication.allowed_methods
         elif isinstance(self._meta.authentication, Authentication):
-            anon_methods = allowed_methods
+            anon_methods = self._meta.allowed_methods
         else:
             anon_methods = []
-        
+
         if method in anon_methods:
             return False
         else:
             return True
-        
-        
+
     def can_patch(self):
         """
         Checks to ensure ``patch`` is within ``allowed_methods``.
 
         Used when hydrating related data.
         """
-        allowed = set(self._meta.list_allowed_methods + self._meta.detail_allowed_methods)
+        list_allowed = self._meta.list_allowed_methods
+        detail_allowed = self._meta.detail_allowed_methods
+        allowed = set(list_allowed + detail_allowed)
+
         return 'patch' in allowed
 
     def override_urls(self):
@@ -182,5 +184,3 @@ class ModelResource(TastyModelResource):
             for key, value in schema['fields'].items():
                 schema['fields'][key]['final'] = value.get('final', False)
             return self.create_response(request, schema)
-
-

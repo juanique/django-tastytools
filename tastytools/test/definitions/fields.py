@@ -1,7 +1,6 @@
 from django.test import TestCase
 from tastytools.test.client import Client, MultiTestCase, create_multi_meta
 from datetime import datetime
-from django.contrib.auth.models import User
 from helpers import prepare_test_post_data
 
 
@@ -35,7 +34,7 @@ def generate(api, setUp=None):
             return bad_value
 
         @staticmethod
-        def multi_nice_messages(resource_name, resource, field_name, field):
+        def multi_nice_messages(self, resource_name, resource, field_name, field):
             if resource.can_create():
                 post_data = prepare_test_post_data(self, resource)
                 try:
@@ -47,10 +46,15 @@ def generate(api, setUp=None):
                     post_data)
 
                 for code in [404, 500]:
-                    msg = "%s return %s when issuing a POST when missing %s"
+                    msg = "%s returns a %s response when issuing a POST with missing %s"
                     msg %= (resource_name, code, field_name)
                     self.assertNotEqual(code, response.status_code, msg)
-                print response.content_type
+                header, content_type = response._headers['content-type']
+
+                if len(response.content) > 0:
+                    msg = "Bad content type when POSTing a %s with missing %s: %s (%s)=> %s"
+                    msg %= (resource_name, field_name, content_type, response.status_code, response.content)
+                    self.assertTrue(content_type.startswith('application/json'), msg)
 
         @staticmethod
         def multi_help(self, resource_name, resource, field_name, field):
@@ -99,8 +103,7 @@ def generate(api, setUp=None):
                 #attempt to PATCH
                 patch_data = {}
                 patch_data[field_name] = bad_value
-                patch_response = self.client.patch(location, patch_data,
-                    parse='json')
+                self.client.patch(location, patch_data, parse='json')
                 get_response = client.get(location, parse='json')
 
                 msg = "%s.%s can be changed by a PATCH and it's readonly!\n%s"
