@@ -40,10 +40,12 @@ class Api(TastyApi):
             super(Api, self).register(resource, canonical)        
 
             try:
-                pass
                 resource._meta.example = resource._meta.example_class(self)
-            except AttributeError:
-                pass
+            except AttributeError as e:
+                continue
+                msg = "%s: Did you forget to define the example class for %s?"
+                msg %= (e, resource.__class__.__name__)
+                raise Exception(msg)
         
     def get_resource_example_data(self, resource_name, method):
         return getattr(self.resource(resource_name)._meta.example,
@@ -53,6 +55,11 @@ class Api(TastyApi):
         options = self.resource(resource_name)._meta
         allowed = set(options.allowed_methods + options.detail_allowed_methods)
         return method.lower() in allowed
+    
+    def resource_allows_detail(self, resource_name, method):
+        options = self.resource(resource_name)._meta
+        return method.lower() in options.detail_allowed_methods
+        
 
     def dehydrate(self, resource, obj, request=None):
         if type(resource) is str:

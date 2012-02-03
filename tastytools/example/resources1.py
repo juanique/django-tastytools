@@ -1,5 +1,6 @@
 from tastypie.resources import ModelResource
-from models import Test
+from tastypie import fields
+from ..models import Test
 
 class Test_1_1_Resource(ModelResource):
     class Meta:

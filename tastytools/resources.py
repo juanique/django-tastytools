@@ -1,9 +1,13 @@
 from tastypie.resources import Resource, ModelResource as TastyModelResource
 from django.conf.urls.defaults import url
-from tastypie import fields
+from tastytools import fields
 from test.resources import TestData
 from django.http import HttpResponse
+from django.utils import simplejson
 from tastypie import http
+from tastytools.authentication import AuthenticationByMethod
+from tastypie.authentication import Authentication
+from tastypie.exceptions import ImmediateHttpResponse
 
 
 class ModelResource(TastyModelResource):
@@ -54,7 +58,30 @@ class ModelResource(TastyModelResource):
                 getattr(self, func)(bundle, related_objs)
             else:
                 related_mngr.add(*related_objs)
-                
+
+    def apply_authorization_limits(self, request, object_list):
+        if request.method in ['PUT','PATCH']:
+            json_data = simplejson.loads(request.raw_post_data)
+            for key in json_data.keys():
+                if key in self.fields.keys() and self.fields[key].final is True:
+                    raise ImmediateHttpResponse(response=http.HttpUnauthorized("Error message"))
+        
+        return object_list
+
+    def method_request_auth(self, method):
+        if isinstance(self._meta.authentication, AuthenticationByMethod):
+            anon_methods = self._meta.authentication.allowed_methods
+        elif isinstance(self._meta.authentication, Authentication):
+            anon_methods = allowed_methods
+        else:
+            anon_methods = []
+        
+        if method in anon_methods:
+            return False
+        else:
+            return True
+        
+        
     def can_patch(self):
         """
         Checks to ensure ``patch`` is within ``allowed_methods``.
@@ -63,19 +90,29 @@ class ModelResource(TastyModelResource):
         """
         allowed = set(self._meta.list_allowed_methods + self._meta.detail_allowed_methods)
         return 'patch' in allowed
-    
 
     def override_urls(self):
         urlexp = r'^(?P<resource_name>%s)/example/'
         urlexp %= self._meta.resource_name
-        return [url(urlexp, self.wrap_view('get_example_data_view'),
-            name='api_get_example_data')
+
+        urlexp_2 = r'^(?P<resource_name>%s)/schema/'
+        urlexp_2 %= self._meta.resource_name
+        return [
+            url(urlexp, self.wrap_view('get_example_data_view'),
+                name='api_get_example_data'),
+            url(urlexp_2, self.wrap_view('get_doc_data_view'),
+                name='api_get_doc_data'),
         ]
 
     def create_test_resource(self, force=False, *args, **kwargs):
         force = force or {}
-        return self._meta.example.create_test_resource(force=force, *args,
-            **kwargs)
+        try:
+            return self._meta.example.create_test_resource(force=force, *args,
+                **kwargs)
+        except AttributeError as e:
+            msg = "%s: Did you forget to define the example class for %s?"
+            msg %= (e, self.__class__.__name__)
+            raise Exception(msg)
 
     def create_test_model(self, data=None, *args, **kwargs):
         if data is None:
@@ -117,3 +154,33 @@ class ModelResource(TastyModelResource):
 
         return self.create_response(request, output,
             response_class=response_class)
+
+    def get_doc_data_view(self, request, api_name=None,
+        resource_name=None):
+
+            allowed_methods = self._meta.allowed_methods
+            if isinstance(self._meta.authentication, AuthenticationByMethod):
+                anon_methods = self._meta.authentication.allowed_methods
+            elif isinstance(self._meta.authentication, Authentication):
+                anon_methods = allowed_methods
+            else:
+                anon_methods = []
+
+            schema = self.build_schema()
+            methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+            authentication_list = {}
+
+            for method in methods:
+                if method.lower() not in allowed_methods:
+                    authentication_list[method.lower()] = 'NOT_ALLOWED'
+                elif method in anon_methods:
+                    authentication_list[method.lower()] = 'ALLOWED'
+                else:
+                    authentication_list[method.lower()] = 'AUTH_REQUIRED'
+
+            schema['auth'] = authentication_list
+            for key, value in schema['fields'].items():
+                schema['fields'][key]['final'] = value.get('final', False)
+            return self.create_response(request, schema)
+
+
