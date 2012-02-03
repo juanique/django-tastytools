@@ -74,11 +74,12 @@ def generate(api, setUp=None):
                 post_response = self.client.post(
                     resource.get_resource_list_uri(), post_data)
 
-                msg = "Failed to POST example data for resource "\
+                msg = "Failed to POST example data for resource %s"\
                     "S: %s. R(%s): %s"
                 msg %= (resource_name,
+                        post_data,
                         post_response.status_code,
-                        post_response.content, post_data)
+                        post_response.content)
                 self.assertEqual(post_response.status_code, 201, msg)
 
         @staticmethod
