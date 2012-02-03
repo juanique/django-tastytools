@@ -2,6 +2,7 @@ from django.test import TestCase
 from tastytools.test.resources import TestData
 from tastytools.test.client import Client, MultiTestCase, create_multi_meta
 from django.contrib.auth.models import User
+from helpers import prepare_test_post_data
 
 
 def generate(api, setUp=None):
@@ -70,7 +71,7 @@ def generate(api, setUp=None):
         @staticmethod
         def multi_test_post(self, resource_name, resource):
             if resource.can_create():
-                post_data = resource.get_test_post_data()
+                post_data = prepare_test_post_data(self, resource)
 
                 post_response = self.client.post(
                     resource.get_resource_list_uri(), post_data)
