@@ -2,6 +2,7 @@ from django.test import TestCase
 from tastytools.test.client import Client, MultiTestCase, create_multi_meta
 from datetime import datetime
 from django.contrib.auth.models import User
+from helpers import prepare_test_post_data
 
 
 def generate(api, setUp=None):
@@ -32,6 +33,24 @@ def generate(api, setUp=None):
                 raise Exception("Unrecognized classname: %s" % field_classname)
 
             return bad_value
+
+        @staticmethod
+        def multi_nice_messages(resource_name, resource, field_name, field):
+            if resource.can_create():
+                post_data = prepare_test_post_data(self, resource)
+                try:
+                    del post_data[field_name]
+                except:
+                    return
+
+                response = self.client.post(resource.get_resource_list_uri(),
+                    post_data)
+
+                for code in [404, 500]:
+                    msg = "%s return %s when issuing a POST when missing %s"
+                    msg %= (resource_name, code, field_name)
+                    self.assertNotEqual(code, response.status_code, msg)
+                print response.content_type
 
         @staticmethod
         def multi_help(self, resource_name, resource, field_name, field):
