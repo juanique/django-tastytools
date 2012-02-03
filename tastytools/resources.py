@@ -65,8 +65,23 @@ class ModelResource(TastyModelResource):
             for key in json_data.keys():
                 if key in self.fields.keys() and self.fields[key].final is True:
                     raise ImmediateHttpResponse(response=http.HttpUnauthorized("Error message"))
+        
         return object_list
 
+    def method_request_auth(self, method):
+        if isinstance(self._meta.authentication, AuthenticationByMethod):
+            anon_methods = self._meta.authentication.allowed_methods
+        elif isinstance(self._meta.authentication, Authentication):
+            anon_methods = allowed_methods
+        else:
+            anon_methods = []
+        
+        if method in anon_methods:
+            return False
+        else:
+            return True
+        
+        
     def can_patch(self):
         """
         Checks to ensure ``patch`` is within ``allowed_methods``.
