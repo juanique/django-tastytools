@@ -1,7 +1,6 @@
 from django.test import TestCase
 from tastytools.test.resources import TestData
 from tastytools.test.client import Client, MultiTestCase, create_multi_meta
-from django.contrib.auth.models import User
 
 
 def generate(api, setUp=None):
@@ -77,7 +76,8 @@ def generate(api, setUp=None):
 
                 msg = "Failed to POST example data for resource "\
                     "S: %s. R(%s): %s"
-                msg %= (post_response.status_code,
+                msg %= (resource_name,
+                        post_response.status_code,
                         post_response.content, post_data)
                 self.assertEqual(post_response.status_code, 201, msg)
 
