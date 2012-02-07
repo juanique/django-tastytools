@@ -138,8 +138,7 @@ class Client(DjangoClient):
         if parse == "json":
             try:
                 response.data = simplejson.loads(response.content)
-            except Exception, error:
-                print error.message
+            except Exception:
                 response.data = None
         return response
 
