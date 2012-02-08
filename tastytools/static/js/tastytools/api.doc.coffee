@@ -4,6 +4,7 @@ dumpObjectIndented = (obj, indent="", isProp=false) ->
   isObject = typeof obj is "object" and not isArray
   isString = typeof obj is "string"
   isNumber = typeof obj is "number"
+  isBoolean = typeof obj is "boolean"
 
   if isString
     out = '"' + obj + '"'
@@ -11,7 +12,7 @@ dumpObjectIndented = (obj, indent="", isProp=false) ->
       return out
     else
       return indent + out
-  if isNumber
+  if isNumber or isBoolean
     if isProp
       return obj
     else
@@ -36,6 +37,7 @@ dumpObjectIndented = (obj, indent="", isProp=false) ->
     else
       ods = (dumpObjectIndented(item, indent + "  ")+"\n" for item in obj)
       out = "[ \n" + ods + "\n"+"]\n"
+
   out = out.replace(/\n,/g, ",\n")
   out = out.replace(/\n\n/g, "\n")
   return out
