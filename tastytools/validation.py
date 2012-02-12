@@ -1,4 +1,5 @@
 from tastypie.validation import Validation
+from tastytools.exceptions import ValidationError, MissingField
 
 
 class FieldsValidation(Validation):
@@ -50,26 +51,26 @@ class FieldsValidation(Validation):
         required_errors = self.validate_required(bundle, request)
         validation_errors = self.validate_fields(bundle, request)
 
-        errors = {}
-        errors.update(required_errors)
-        errors.update(validation_errors)
+        errors = required_errors + validation_errors
 
-        return errors
+        if errors:
+            return {'errors' : errors}
+        return {}
 
     def validate_fields(self, bundle, request=None):
-        errors = {}
+        errors = []
         for field in self.validated_fields[request.method]:
             validation_func = getattr(self, '%s_is_valid' % field)
-            valid, reason = validation_func(bundle.data.get(field, None),
-                bundle, request)
-            if not valid:
-                errors[field] = reason
+            try:
+                validation_func(bundle.data.get(field, None), bundle, request)
+            except ValidationError, error:
+                errors.append(error.get_dict())
         return errors
 
     def validate_required(self, bundle, request=None):
-        errors = {}
+        errors = []
         for required_field in self.required_fields[request.method]:
             if required_field not in bundle.data:
-                msg = '%s field is required.' % required_field
-                errors[required_field] = [msg]
+                error = MissingField(field_name=required_field)
+                errors.append(error.get_dict())
         return errors
