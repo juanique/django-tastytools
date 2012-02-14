@@ -16,6 +16,7 @@ setup(
             '*.*',
         ]
     },
+    include_package_data=True,
     long_description="Tools for django-tastypie autotesting and documentation.",
 )
 
