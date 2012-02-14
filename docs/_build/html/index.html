@@ -25,7 +25,8 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="tastytools 0.1.1 documentation" href="#" /> 
+    <link rel="top" title="tastytools 0.1.1 documentation" href="#" />
+    <link rel="next" title="Getting Started with TastyTools" href="tutorial.html" /> 
   </head>
   <body>
     <div class="related">
@@ -34,6 +35,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="tutorial.html" title="Getting Started with TastyTools"
+             accesskey="N">next</a> |</li>
         <li><a href="#">tastytools 0.1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
@@ -45,11 +49,69 @@
             
   <div class="section" id="welcome-to-tastytools-s-documentation">
 <h1>Welcome to tastytools&#8217;s documentation!<a class="headerlink" href="#welcome-to-tastytools-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Contents:</p>
+<p>Tastytools is a set for usefull tools to develop a quality tastypie webservice
+API.</p>
+<p>It&#8217;s main features are automatic documentation and the generation of Hygiene
+tests (tests that ensure the pressence of certain features that that do not
+give positive satisfaction, though dissatisfaction results from their absence).
+For example it tests the pressence of help fields
+An example in the case of an API, is a help text on the fields</p>
 <div class="toctree-wrapper compound">
-<ul class="simple">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Getting Started with TastyTools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#installation">Installation</a></li>
+</ul>
+</li>
 </ul>
 </div>
+</div>
+<div class="section" id="quick-start">
+<h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h1>
+<p>Assuming you have a tastypie api:</p>
+<ol class="arabic">
+<li><p class="first">Add <tt class="docutils literal"><span class="pre">tastytools</span></tt> to <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>.</p>
+</li>
+<li><p class="first">Create an <tt class="docutils literal"><span class="pre">api</span></tt> directory in your project root  with a bare <tt class="docutils literal"><span class="pre">__init__.py</span></tt>.</p>
+</li>
+<li><p class="first">Create an <tt class="docutils literal"><span class="pre">api/&lt;my_app&gt;.py</span></tt> file and place the following in it:</p>
+<div class="highlight-python"><pre>from tastytools.api import Api
+from &lt;my_app&gt;.api.resources import MyModelResource
+from &lt;my_app&gt;.api.resources import AnoterResource, YetAnotherResource
+
+api = Api()
+api.register(MyModelResource)
+api.register(resources=[AnotherResource, YetAnotherResource])</pre>
+</div>
+</li>
+<li><p class="first">In your root URLconf, add the following code (around where the tastypie code might be):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">tastypie.api</span> <span class="kn">import</span> <span class="n">Api</span>
+<span class="kn">from</span> <span class="nn">my_app.api.resources</span> <span class="kn">import</span> <span class="n">MyModelResource</span>
+
+<span class="n">api_name</span> <span class="o">=</span> <span class="s">&#39;v1&#39;</span>
+<span class="n">v1_api</span> <span class="o">=</span> <span class="n">Api</span><span class="p">(</span><span class="n">api_name</span><span class="o">=</span><span class="n">api_name</span><span class="p">)</span>
+<span class="n">v1_api</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MyModelResource</span><span class="p">())</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+  <span class="c"># ...more URLconf bits here...</span>
+  <span class="c"># Then add:</span>
+  <span class="p">(</span><span class="s">r&#39;^tastytools/&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s">&#39;tastytools.urls&#39;</span><span class="p">),</span> <span class="p">{</span><span class="s">&#39;api_name&#39;</span><span class="p">:</span> <span class="n">api_name</span><span class="p">}),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">got to <a class="reference external" href="http://localhost:8000/tastytools/v1/">http://localhost:8000/tastytools/v1/</a>.</p>
+</li>
+</ol>
+<p>As you can see, now you have documentation for anyone who wants to consume
+your api resources!</p>
+</div>
+<div class="section" id="requirements">
+<h1>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h1>
+<p>Tastytools requires Tastypie to work. If you use <a href="#id1"><span class="problematic" id="id2">Pip_</span></a>, you can install
+the necessary bits via the included <tt class="docutils literal"><span class="pre">requirements.txt</span></tt>:</p>
+<ul class="simple">
+<li>django-tastypie (<a class="reference external" href="http://django-tastypie.readthedocs.org/">http://django-tastypie.readthedocs.org/</a>)</li>
+</ul>
 </div>
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
@@ -71,9 +133,14 @@
 <li><a class="reference internal" href="#">Welcome to tastytools&#8217;s documentation!</a><ul>
 </ul>
 </li>
+<li><a class="reference internal" href="#quick-start">Quick Start</a></li>
+<li><a class="reference internal" href="#requirements">Requirements</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tutorial.html"
+                        title="next chapter">Getting Started with TastyTools</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/index.txt"
@@ -102,6 +169,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="tutorial.html" title="Getting Started with TastyTools"
+             >next</a> |</li>
         <li><a href="#">tastytools 0.1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
