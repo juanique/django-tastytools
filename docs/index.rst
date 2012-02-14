@@ -1,10 +1,18 @@
 Welcome to tastytools's documentation!
 ======================================
 
-Contents:
+Tastytools is a set for usefull tools to develop a quality tastypie webservice
+API.
+
+It's main features are automatic documentation and the generation of Hygiene
+tests (tests that ensure the pressence of certain features that that do not
+give positive satisfaction, though dissatisfaction results from their absence).
+For example it tests the pressence of help fields
+An example in the case of an API, is a help text on the fields
 
 .. toctree::
    :maxdepth: 2
+
    tutorial
 
 Quick Start
@@ -38,6 +46,18 @@ Assuming you have a tastypie api:
       (r'^tastytools/', include('tastytools.urls'), {'api_name': api_name}),
     )
 
+5. got to http://localhost:8000/tastytools/v1/.
+
+As you can see, now you have documentation for anyone who wants to consume
+your api resources!
+
+Requirements
+============
+
+Tastytools requires Tastypie to work. If you use Pip_, you can install
+the necessary bits via the included ``requirements.txt``:
+
+* django-tastypie (http://django-tastypie.readthedocs.org/)
 
 
 Indices and tables
