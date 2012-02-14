@@ -1,12 +1,8 @@
 ===============
-django-tastypie
+django-tastytools
 ===============
 
-Creating delicious APIs for Django apps since 2010.
-
-Currently in beta (v1.0.0-beta) but being used actively in production on several
-sites.
-
+Useful tools for developing REST services with django-tastypie
 
 Requirements
 ============
