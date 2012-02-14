@@ -25,7 +25,8 @@ Assuming you have a tastypie api:
 3. Create an ``api/<my_app>.py`` file and place the following in it::
 
     from tastytools.api import Api
-    from <my_app>.api.resources import MyModelResource, AnoterResource, YetAnotherResource
+    from <my_app>.api.resources import MyModelResource
+    from <my_app>.api.resources import AnoterResource, YetAnotherResource
 
     api = Api()
     api.register(MyModelResource)
