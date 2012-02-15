@@ -4,8 +4,9 @@ Getting Started with TastyTools
 ===============================
 
 For example purposes, we'll be adding tools the the simple blog application that Tasytypie has in it's own tutorial.
-Here is ``myapp/models.py``::
+Here it is::
 
+    #``myapp/models.py``
     from tastypie.utils import now
     from django.contrib.auth.models import User
     from django.db import models
@@ -32,9 +33,11 @@ Here is ``myapp/models.py``::
 Installation
 ============
 
-git clone https://github.com/juanique/django-tastytools.git
-cd django-tastytools
-python setup.py install
+Simply clone the repository::
+
+    git clone https://github.com/juanique/django-tastytools.git
+    cd django-tastytools
+    python setup.py install
 
 Configuration
 =============
