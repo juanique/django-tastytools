@@ -60,11 +60,4 @@ the necessary bits via the included ``requirements.txt``:
 
 * django-tastypie (http://django-tastypie.readthedocs.org/)
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+.. _Pip: http://pip.openplans.org/
