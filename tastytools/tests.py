@@ -46,14 +46,38 @@ class ApiTestCase(TestCase):
         self._assert_in_registry(["test_3_1", "test_3_2", "test_3_3"])
         
     def test_testdata(self):
-        """The API is able to register testdata classes and retrieve them"""
+        """The API is able to register a testdata class"""
         self.api.register(resources1.Test_1_1_Resource())
         self.api.register_testdata(testdata1.Test_1_1_TestData)
-        td = self.api.resource("test_1_1")._meta.testdata_class
+        td = self.api.resource("test_1_1")._meta.testdata
         msg = "%s is not subclass of ResourceTestData" % td.__class__
-        self.assertTrue(issubclass(td, ResourceTestData), msg)
+        self.assertTrue(issubclass(td.__class__, ResourceTestData), msg)
         res = self.api.resource("test_1_1").create_test_resource()
+
+    def test_testdata_list(self):
+        """The API is able to register a list of testdata classes"""
+        resources=[resources1.Test_1_1_Resource(), resources1.Test_1_2_Resource()]
+        self.api.register(resources=resources)
+        testdata_list=[testdata1.Test_1_1_TestData,testdata1.Test_1_2_TestData]
+        self.api.register_testdata(list=testdata_list)
         
+        for r in ["test_1_1", "test_1_2"]:
+            td = self.api.resource(r)._meta.testdata
+            msg = "%s is not subclass of ResourceTestData" % td.__class__
+            self.assertTrue(issubclass(td.__class__, ResourceTestData), msg)
+            res = self.api.resource(r).create_test_resource()
+
+    def test_testdata_modules(self):
+        """The API is able to register a testdata classes from a module"""
+        self.api.register(modules=[resources1])
+        self.api.register_testdata(modules=[testdata1])
+
+        for r in ["test_1_1", "test_1_2"]:
+            td = self.api.resource(r)._meta.testdata
+            msg = "%s is not subclass of ResourceTestData" % td.__class__
+            self.assertTrue(issubclass(td.__class__, ResourceTestData), msg)
+            res = self.api.resource(r).create_test_resource()
+
 
 class ClientTest(TestCase):
     urls = 'tastytools.test_urls'
