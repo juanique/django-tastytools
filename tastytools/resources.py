@@ -63,7 +63,8 @@ class ModelResource(TastyModelResource):
         if request.method in ['PUT', 'PATCH']:
             json_data = simplejson.loads(request.raw_post_data)
             for key in json_data.keys():
-                if key in self.fields.keys() and self.fields[key].final:
+                is_final = getattr(self.fields[key], "final", False)
+                if key in self.fields.keys() and is_final:
                     response = http.HttpUnauthorized("Error message")
                     raise ImmediateHttpResponse(response=response)
         return object_list
