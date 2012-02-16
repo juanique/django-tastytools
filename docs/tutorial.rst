@@ -3,11 +3,12 @@
 Getting Started with TastyTools
 ===============================
 
-For example purposes, we'll be adding tools the the simple blog application that Tasytypie has in it's own tutorial.
-Here it is::
+For example purposes, we'll be adding tools to the simple blog application that Tasytypie has in it's own tutorial.
 
-    #``myapp/models.py``
-    from tastypie.utils import now
+Here is the code we'll be using (taken from the tastypie quickstart and tutorial with a few minor changes).
+
+``myapp/models.py``::
+
     from django.contrib.auth.models import User
     from django.db import models
     from django.template.defaultfilters import slugify
@@ -15,7 +16,7 @@ Here it is::
 
     class Entry(models.Model):
         user = models.ForeignKey(User)
-        pub_date = models.DateTimeField(default=now)
+        pub_date = models.DateTimeField(auto_now_add=True)
         title = models.CharField(max_length=200)
         slug = models.SlugField()
         body = models.TextField()
@@ -30,6 +31,46 @@ Here it is::
 
             return super(Entry, self).save(*args, **kwargs)
 
+
+``urls.py``::
+
+    from django.conf.urls.defaults import patterns, include, url
+    from django.contrib import admin
+    from tastypie.api import Api
+    from myapp.api.resources import EntryResource, UserResource
+
+    v1_api = Api(api_name='v1')
+    v1_api.register(UserResource())
+    v1_api.register(EntryResource())
+
+    admin.autodiscover()
+
+    urlpatterns = patterns('',
+        url(r'^admin/', include(admin.site.urls)),
+        (r'^api/', include(v1_api.urls)),
+    )
+
+
+``myapp/api/resources.py``::
+
+    from django.contrib.auth.models import User
+    from tastypie import fields
+    from tastypie.resources import ModelResource
+    from myapp.models import Entry
+
+
+    class UserResource(ModelResource):
+        class Meta:
+            queryset = User.objects.all()
+            resource_name = 'user'
+
+
+    class EntryResource(ModelResource):
+        user = fields.ForeignKey(UserResource, 'user')
+
+        class Meta:
+            queryset = Entry.objects.all()
+            resource_name = 'entry'
 
 Installation
 ============
