@@ -60,7 +60,7 @@ class ModelResource(TastyModelResource):
                 related_mngr.add(*related_objs)
 
     def apply_authorization_limits(self, request, object_list):
-        if request.method in ['PUT', 'PATCH']:
+        if request is not None and request.method in ['PUT', 'PATCH']:
             json_data = simplejson.loads(request.raw_post_data)
             for key in json_data.keys():
                 is_final = getattr(self.fields[key], "final", False)
