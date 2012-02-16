@@ -17,7 +17,10 @@ def _resources_from(module):
                 yield o
         except TypeError: pass
 
+
 class Api(TastyApi):
+    
+    _testdata_classes = {}
             
     def resource(self, resource_name):
         return self._registry[resource_name]
@@ -37,18 +40,27 @@ class Api(TastyApi):
             if inspect.isclass(resource):
                 resource = resource()
             
-            super(Api, self).register(resource, canonical)        
+            super(Api, self).register(resource, canonical)
+            self._bind_testdata(resource._meta.resource_name)
+    
+    def register_testdata(self, testdata_class):
+        self._testdata_classes[testdata_class.resource] = testdata_class
+        self._bind_testdata(testdata_class.resource)
 
-            try:
-                resource._meta.example = resource._meta.example_class(self)
-            except AttributeError as e:
-                continue
-                msg = "%s: Did you forget to define the example class for %s?"
-                msg %= (e, resource.__class__.__name__)
-                raise Exception(msg)
+    def _bind_testdata(self, resource_name):
+        testdata_class = self._testdata_classes.get(resource_name)
+        resource = self._registry.get(resource_name)
+        
+        if testdata_class is None:
+            return
+        if resource_name is None:
+            return
+            
+        resource._meta.testdata_class = testdata_class
+        resource._meta.testdata = testdata_class(self)
         
     def get_resource_example_data(self, resource_name, method):
-        return getattr(self.resource(resource_name)._meta.example,
+        return getattr(self.resource(resource_name)._meta.testdata,
             method.lower())
 
     def resource_allows_method(self, resource_name, method):

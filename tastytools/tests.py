@@ -2,24 +2,19 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from api import Api
 from example import resources1, resources2, resources3
+from example import testdata1
 from validation import FieldsValidation
 from test.client import Client
 from models import Test as TestModel
 from django.core.urlresolvers import reverse
+from tastytools.test.resources import ResourceTestData
+
 
 class ApiTestCase(TestCase):
-
+    urls = 'tastytools.test_urls'
+    
     def setUp(self):
-
-        resources = [resources1.Test_1_2_Resource, resources1.Test_1_3_Resource()]
-        modules = [resources2, resources3]
-
         self.api = Api()
-        self.api.register(resources1.Test_1_1_Resource())
-        self.api.register(resources=resources)
-        self.api.register(modules=modules)
-        #self.factory = RequestFactory()
-        #self.request = self.factory.get("")
         
     def _assert_in_registry(self, resource_names):
         for resource_name in resource_names:
@@ -31,19 +26,36 @@ class ApiTestCase(TestCase):
 
     def test_resource_importing(self):
         """The Api class is able to import a single resource"""
+        self.api.register(resources1.Test_1_1_Resource())
         self._assert_in_registry(["test_1_1"])
 
     def test_resource_list_importing(self):
         """The Api class is able to import a list of resources"""
+        resources = [
+                resources1.Test_1_2_Resource, 
+                resources1.Test_1_3_Resource() 
+            ]
+        self.api.register(resources=resources)
         self._assert_in_registry(["test_1_2", "test_1_3"])
         
     def test_module_list_importing(self):
         """The Api class is able to import all resources from listed modules"""
+        modules = [resources2, resources3]
+        self.api.register(modules=modules)
         self._assert_in_registry(["test_2_1", "test_2_2", "test_2_3"])
         self._assert_in_registry(["test_3_1", "test_3_2", "test_3_3"])
+        
+    def test_testdata(self):
+        """The API is able to register testdata classes and retrieve them"""
+        self.api.register(resources1.Test_1_1_Resource())
+        self.api.register_testdata(testdata1.Test_1_1_TestData)
+        td = self.api.resource("test_1_1")._meta.testdata_class
+        msg = "%s is not subclass of ResourceTestData" % td.__class__
+        self.assertTrue(issubclass(td, ResourceTestData), msg)
+        res = self.api.resource("test_1_1").create_test_resource()
+        
 
 class ClientTest(TestCase):
-    
     urls = 'tastytools.test_urls'
     
     def test_urls_are_working(self):
@@ -55,7 +67,7 @@ class ClientTest(TestCase):
         obj.test = 'TESTING'
         obj.save()
         
-        resource = resources1.Test_1_1_Resource("test")
+        resource = resources1.Test_1_1_Resource()
         
         list_path = resource.get_resource_list_uri()
         object_path = resource.get_resource_uri(obj)
