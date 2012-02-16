@@ -1,3 +1,5 @@
+""" Defines the generator function for resource test cases """
+
 from django.test import TestCase
 from tastytools.test.resources import TestData
 from tastytools.test.client import Client, MultiTestCase, create_multi_meta
@@ -5,6 +7,8 @@ from helpers import prepare_test_post_data
 
 
 def generate(api, setUp=None):
+    """ Generates a set of tests for every Resource"""
+
     if setUp is None:
         def user_setUp(*args, **kwargs):
             return
@@ -12,9 +16,13 @@ def generate(api, setUp=None):
         user_setUp = setUp
 
     class UnderResources(MultiTestCase):
+        """ Generates a set of tests for every Resource """
 
         @staticmethod
         def multi_create_test_resource_unicity(self, resource_name, resource):
+            """ verifies that one and only one object of the resource was created
+            when calling create_test_resource
+            """
             initial_count = len(resource._meta.object_class.objects.all())
             resource.create_test_resource()
             final_count = len(resource._meta.object_class.objects.all())
@@ -22,35 +30,41 @@ def generate(api, setUp=None):
 
         @staticmethod
         def multi_create_test_resource(self, resource_name, resource):
-            #only if resource allows detail GET
-            if 'GET' not in resource._meta.detail_allowed_methods:
-                return
+            """ Verifies that the resource's create_test_data method exists and
+            it doesn't raise any exceptions when called without any parameters
 
-            client = Client()
-            msg = "Could not create test resource for %s" % resource_name
-
+            """
             try:
                 resource.create_test_resource()
             except Exception, err:
-                msg = "%s: %s - %s"
-                msg %= (msg, err.__class__.__name__, err.message)
+                msg = "Could not create test resource for %s" % resource_name
+                msg = "%s: %s - %s" % (msg, err.__class__.__name__, err.message)
                 self.assertTrue(False, msg)
 
-            get_response = client.get(resource.get_resource_list_uri(),
-                parse='json')
-            self.assertEqual(1, get_response.data['meta']['total_count'], msg)
+        @staticmethod
+        def multi_test_data_register(self, resource_name, resource):
+            """ verify that the resource has a Test Data generating class
+            asssociated to it
+            """
+            if not hasattr(resource._meta, 'test_data'):
+
+                msg = "Missing example data for resource: %(resource)s \n"
+                msg += "-Did you create a TestData child class for %(resource)s \n"
+                msg += "-Did you register the TestData on your Api? \n"
+                msg += "-Did you correctly set its resouce='%(resource)s' property?"
+
+                msg %= {"resource" : resource_name}
+                self.assertTrue(False, msg)
 
         @staticmethod
         def multi_example_data_existence(self, resource_name, resource):
+            """ If a resource allows POST(or GET), this test verifies that there
+            is test data for such requests
+
+            """
             #Check existence
             for method in ['POST', 'GET']:
                 try:
-                    if not hasattr(resource._meta, 'example'):
-                        msg = "Missing example data for resource: %s "\
-                            "Did you forget to set %s.Meta.example_class?"
-                        msg %= (resource_name, resource.__class__.__name__)
-                        self.assertTrue(False, msg)
-
                     if api.resource_allows_method(resource_name, method):
                         example = getattr(resource._meta.example,
                             method.lower())
@@ -69,6 +83,10 @@ def generate(api, setUp=None):
 
         @staticmethod
         def multi_test_post(self, resource_name, resource):
+            """ If the resource allows POSTing, this test verifies that such call
+            using the example post data will work
+
+            """
             if resource.can_create():
                 post_data = prepare_test_post_data(self, resource)
 
@@ -85,7 +103,10 @@ def generate(api, setUp=None):
 
         @staticmethod
         def multi_example_get_detail(self, resource_name, resource):
+            """ If the resource allows GETing, this test verifies that such call
+            returns something similar to the get example data
 
+            """
             if api.resource_allows_detail(resource_name, 'GET'):
                 uri, res = resource.create_test_resource()
                 get_response = self.client.get(uri, parse='json')
@@ -104,30 +125,6 @@ def generate(api, setUp=None):
                     "%s - EXAMPLE: %s vs GET: %s"
                 msg %= (resource_name, expected_keys, object_keys)
                 self.assertEqual(expected_keys, object_keys, msg)
-
-        @staticmethod
-        def multi_declared_example_fields_coherence(self, resource_name,
-            resource):
-
-            #only if resource allows detail GET
-            if 'GET' not in resource._meta.detail_allowed_methods:
-                return
-
-            example_fields = set(resource.example_fields)
-            declared_fields = set(resource.declared_fields.keys())
-
-            delta = example_fields - declared_fields
-            if len(delta) > 0:
-                msg = "%s.%s field appears on the examples but it is "\
-                    "not declared."
-                msg %= (resource_name, delta.pop())
-                self.assertTrue(False, msg)
-
-            delta = declared_fields - example_fields
-            if len(delta) > 0:
-                msg = "%s.%s field is declared but is missing from examples."
-                msg %= (resource_name, delta.pop())
-                self.assertTrue(False, msg)
 
         @staticmethod
         def generate_arguments():

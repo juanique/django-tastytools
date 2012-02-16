@@ -30,6 +30,7 @@ Here it is::
 
             return super(Entry, self).save(*args, **kwargs)
 
+
 Installation
 ============
 
@@ -38,6 +39,7 @@ Simply clone the repository::
     git clone https://github.com/juanique/django-tastytools.git
     cd django-tastytools
     python setup.py install
+
 
 Configuration
 =============
@@ -96,7 +98,7 @@ The first thing we need to do is implement a Test Data class, Which generates
 data four our tests::
 
     # myapp/api/resources.py
-    from tastytools.test.resources import ResourceTestData, Related, TestData
+    from tastytools.test.resources import ResourceTestData
 
 
     class EntryTestData(ResourceTestData):
@@ -104,9 +106,7 @@ data four our tests::
         def __init__(self, api):
             ResourceTestData.__init__(self, api, 'entry')
 
-        def sample_data(self, related=Related.Model, force=False):
-            data = TestData(self.api, force, related)
-
+        def get_data(self, data):
             data.set('user', resource='user')
             data.set('pub_date', '2010-12-24T06:23:48')
             data.set('title', 'Lorem ipsum')
