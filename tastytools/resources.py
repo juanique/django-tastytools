@@ -1,4 +1,4 @@
-from tastypie.resources import Resource, ModelResource as TastyModelResource
+from tastypie.resources import Resource as TastyResource, ModelResource as TastyModelResource
 from django.conf.urls.defaults import url
 from tastytools import fields
 from test.resources import TestData
@@ -9,6 +9,9 @@ from tastytools.authentication import AuthenticationByMethod
 from tastypie.authentication import Authentication
 from tastypie.exceptions import ImmediateHttpResponse
 
+class Resource(TastyResource):
+    resource_uri = fields.CharField(help_text='URI of the resource.',
+        readonly=True)
 
 class ModelResource(TastyModelResource):
 

@@ -1,6 +1,6 @@
 from tastypie.api import Api as TastyApi
 from tastypie.resources import Resource as TastyResource, ModelResource as TastyModelResource
-from tastytools.resources import ModelResource as ToolsResource
+from tastytools.resources import ModelResource as ToolsModelResource, Resource as ToolsResource
 from tastytools.test.resources import ResourceTestData
 import json
 import inspect
@@ -10,7 +10,7 @@ def _resources_from_module(module):
     for name in dir(module):
         o = getattr(module, name)
         try:
-            base_classes = [ToolsResource, TastyResource, TastyModelResource]
+            base_classes = [ToolsResource, ToolsModelResource, TastyResource, TastyModelResource]
             is_base_class = o in base_classes
             is_resource_class =  issubclass(o, TastyResource)
 
