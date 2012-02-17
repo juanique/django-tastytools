@@ -18,6 +18,9 @@ class ModelResource(TastyModelResource):
     resource_uri = fields.CharField(help_text='URI of the resource.',
         readonly=True)
 
+    def IHR(self, response_class, data, request=None):
+        return ImmediateHttpResponse(self.create_response(request, data, response_class))
+
     def save_m2m(self, bundle):
         """
         Handles the saving of related M2M data.
