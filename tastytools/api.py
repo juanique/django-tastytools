@@ -32,17 +32,17 @@ def _testdata_from_module(module):
 
 
 class Api(TastyApi):
-    
+
     _testdata = {}
-            
+
     def resource(self, resource_name):
         return self._registry[resource_name]
-        
+
     def register(self, resource=None, canonical=True, **kwargs):
         resource_list = []
 
         if resource is not None:
-            resource_list.append(resource)            
+            resource_list.append(resource)
         if 'resources' in kwargs:
             resource_list += kwargs['resources']
         if 'modules' in kwargs:
@@ -52,15 +52,15 @@ class Api(TastyApi):
         for resource in resource_list:
             if inspect.isclass(resource):
                 resource = resource()
-            
+
             super(Api, self).register(resource, canonical)
             self._bind_testdata(resource._meta.resource_name)
-    
+
     def register_testdata(self, testdata=None, **kwargs):
         testdata_list = []
 
         if testdata is not None:
-            testdata_list.append(testdata)            
+            testdata_list.append(testdata)
         if 'list' in kwargs:
             testdata_list += kwargs['list']
         if 'modules' in kwargs:
@@ -70,21 +70,21 @@ class Api(TastyApi):
         for testdata in testdata_list:
             if inspect.isclass(testdata):
                 testdata = testdata(self)
-            resource_name = testdata.__class__.resource            
+            resource_name = testdata.__class__.resource
             self._testdata[resource_name] = testdata
             self._bind_testdata(resource_name)
 
     def _bind_testdata(self, resource_name):
         testdata = self._testdata.get(resource_name)
         resource = self._registry.get(resource_name)
-        
+
         if testdata is None:
             return
         if resource is None:
             return
-        
+
         resource._meta.testdata = testdata
-        
+
     def get_resource_example_data(self, resource_name, method):
         return getattr(self.resource(resource_name)._meta.testdata,
             method.lower())
@@ -93,11 +93,11 @@ class Api(TastyApi):
         options = self.resource(resource_name)._meta
         allowed = set(options.allowed_methods + options.detail_allowed_methods)
         return method.lower() in allowed
-    
+
     def resource_allows_detail(self, resource_name, method):
         options = self.resource(resource_name)._meta
         return method.lower() in options.detail_allowed_methods
-        
+
 
     def dehydrate(self, resource, obj, request=None):
         if type(resource) is str:

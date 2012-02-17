@@ -10,7 +10,7 @@ def generate(api, setUp=None):
             return
     else:
         user_setUp = setUp
-                
+
     class UnderResourceFields(MultiTestCase):
 
         @staticmethod
@@ -108,7 +108,7 @@ def generate(api, setUp=None):
 
                 msg = "%s.%s can be changed by a PATCH and it's readonly!\n%s"
                 msg %= (resource_name, field_name, get_response)
-                
+
                 self.assertTrue(get_response.data is not None, "No response data from %s \nWith data: %s" % (location, patch_data))
 
                 self.assertNotEqual(get_response.data.get(field_name, None),
@@ -118,11 +118,9 @@ def generate(api, setUp=None):
         def generate_arguments():
             args = []
             for resource_name, resource in api._registry.items():
-#                print resource_name, ":"
-                for field_name, field in resource.fields.items():
-#                    print "   ", field_name, " ", field
-#                    if hasattr(resource._meta, "_meta.testdata_class"):
-                    args.append((resource_name, resource, field_name, field))
+                if hasattr(resource._meta, "testdata"):
+                    for field_name, field in resource.fields.items():
+                        args.append((resource_name, resource, field_name, field))
 
             return args
 
@@ -134,7 +132,7 @@ def generate(api, setUp=None):
         def setUp(self, *args, **kwargs):
             self.client = Client()
             user_setUp(self, *args, **kwargs)
-            
+
 
     class TestResourceFields(TestCase):
         __metaclass__ = create_multi_meta(UnderResourceFields)
