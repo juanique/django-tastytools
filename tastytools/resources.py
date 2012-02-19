@@ -1,4 +1,4 @@
-from tastypie.resources import Resource, ModelResource as TastyModelResource
+from tastypie.resources import Resource as TastyResource, ModelResource as TastyModelResource
 from django.conf.urls.defaults import url
 from tastytools import fields
 from test.resources import TestData
@@ -9,11 +9,17 @@ from tastytools.authentication import AuthenticationByMethod
 from tastypie.authentication import Authentication
 from tastypie.exceptions import ImmediateHttpResponse
 
+class Resource(TastyResource):
+    resource_uri = fields.CharField(help_text='URI of the resource.',
+        readonly=True)
 
 class ModelResource(TastyModelResource):
 
     resource_uri = fields.CharField(help_text='URI of the resource.',
         readonly=True)
+
+    def IHR(self, response_class, data, request=None):
+        return ImmediateHttpResponse(self.create_response(request, data, response_class))
 
     def save_m2m(self, bundle):
         """
@@ -60,10 +66,11 @@ class ModelResource(TastyModelResource):
                 related_mngr.add(*related_objs)
 
     def apply_authorization_limits(self, request, object_list):
-        if request.method in ['PUT', 'PATCH']:
+        if request is not None and request.method in ['PUT', 'PATCH']:
             json_data = simplejson.loads(request.raw_post_data)
             for key in json_data.keys():
-                if key in self.fields.keys() and self.fields[key].final:
+                fld = self.fields.get(key, None)
+                if fld is not None and getattr(fld, "final", False):
                     response = http.HttpUnauthorized("Error message")
                     raise ImmediateHttpResponse(response=response)
         return object_list
@@ -109,10 +116,10 @@ class ModelResource(TastyModelResource):
     def create_test_resource(self, force=False, *args, **kwargs):
         force = force or {}
         try:
-            return self._meta.example.create_test_resource(force=force, *args,
+            return self._meta.testdata.create_test_resource(force=force, *args,
                 **kwargs)
         except AttributeError as e:
-            msg = "%s: Did you forget to define the example class for %s?"
+            msg = "%s: Did you forget to define a testdata class for %s?"
             msg %= (e, self.__class__.__name__)
             raise Exception(msg)
 
@@ -120,26 +127,26 @@ class ModelResource(TastyModelResource):
         if data is None:
             data = {}
 
-        return self._meta.example.create_test_model(data, *args, **kwargs)
+        return self._meta.testdata.create_test_model(data, *args, **kwargs)
 
     def get_test_post_data(self, data=None):
         if data is None:
             data = {}
 
-        #print "getting post data from %s" % self._meta.example
-        out = self._meta.example.post
+        #print "getting post data from %s" % self._meta.testdata
+        out = self._meta.testdata.post
         if isinstance(out, TestData):
             out = out.data
 
         return out
 
-    def get_example_data_view(self, request, api_name=None,
+    def get_testdata_data_view(self, request, api_name=None,
         resource_name=None):
 
-        if self._meta.example is not None:
+        if self._meta.testdata is not None:
             output = {
-                    'POST': self._meta.example.post,
-                    'GET': self._meta.example.get
+                    'POST': self._meta.testdata.post,
+                    'GET': self._meta.testdata.get
             }
 
             requested_type = request.GET.get('type', 'False')

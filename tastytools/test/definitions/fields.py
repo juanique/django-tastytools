@@ -9,6 +9,7 @@ from helpers import prepare_test_post_data
 def generate(api, setUp=None):
     """ Generates a set of tests for every Field of every Resource"""
     if setUp is None:
+
         def user_setUp(*args, **kwargs):
             return
     else:
@@ -146,8 +147,8 @@ def generate(api, setUp=None):
         def generate_arguments():
             args = []
             for resource_name, resource in api._registry.items():
-                for field_name, field in resource.fields.items():
-                    if hasattr(resource._meta, "example_class"):
+                if hasattr(resource._meta, "testdata"):
+                    for field_name, field in resource.fields.items():
                         args.append((resource_name, resource, field_name,
                             field))
 

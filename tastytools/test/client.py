@@ -14,6 +14,7 @@ def extended_response(method):
         response = method(*args, **kwargs)
         response.crono_end = datetime.now()
         response.crono_start = start
+        return response
     return wrapped
 
 class Client(DjangoClient):
