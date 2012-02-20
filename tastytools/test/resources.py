@@ -155,7 +155,7 @@ class ResourceTestData(object):
         model_class = self.resource._meta.object_class
 
         data = data or self.sample_data(related=Related.Model, force=force,
-                id=id, model_class=model_class)
+                id=id)
 
         valid_data = {}
         m2m = {}
@@ -202,21 +202,20 @@ class ResourceTestData(object):
         return model
 
     #@property
-    def sample_data(self, related=Related.Model, force=False, id=None,
-            model_class=None):
+    def sample_data(self, related=Related.Model, force=False, id=None):
         '''Returns the full a full set of data as an _meta.testdata for
         interacting with the resource
 
         '''
+        model_class = self.resource._meta.object_class
         data = TestData(self.api, force, related, id=id)
-        if related == Related.Model:
-            mockup = Mockup(model_class, generate_fk=True, follow_fk=False)
-            instance = mockup.create_one(commit=False)
-            fields = instance._meta.fields
-            for field in fields:
-                value = instance.__getattribute__(field.name)
-                if value is not None:
-                    data.set(field.name, value)
+        mockup = Mockup(model_class, generate_fk=True, follow_fk=False)
+        instance = mockup.create_one(commit=False)
+        fields = instance._meta.fields
+        for field in fields:
+            value = instance.__getattribute__(field.name)
+            if value is not None:
+                data.set(field.name, value)
 
         return self.get_data(data)
 
