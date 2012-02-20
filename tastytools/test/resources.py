@@ -1,6 +1,7 @@
 from django.db.models.fields.related import ManyToManyField
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
 from django.db import IntegrityError
+from mockups import Mockup
 
 
 class Related(object):
@@ -151,9 +152,10 @@ class ResourceTestData(object):
         '''
         force = force or {}
 
-        data = data or self.sample_data(related=Related.Model, force=force,
-                id=id)
         model_class = self.resource._meta.object_class
+
+        data = data or self.sample_data(related=Related.Model, force=force,
+                id=id, model_class=model_class)
 
         valid_data = {}
         m2m = {}
@@ -200,12 +202,22 @@ class ResourceTestData(object):
         return model
 
     #@property
-    def sample_data(self, related=Related.Model, force=False, id=None):
+    def sample_data(self, related=Related.Model, force=False, id=None,
+            model_class=None):
         '''Returns the full a full set of data as an _meta.testdata for
         interacting with the resource
 
         '''
         data = TestData(self.api, force, related, id=id)
+        if related == Related.Model:
+            mockup = Mockup(model_class, generate_fk=True, follow_fk=False)
+            instance = mockup.create_one(commit=False)
+            fields = instance._meta.fields
+            for field in fields:
+                value = instance.__getattribute__(field.name)
+                if value is not None:
+                    data.set(field.name, value)
+
         return self.get_data(data)
 
     def get_data(self, data):

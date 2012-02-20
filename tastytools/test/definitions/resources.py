@@ -48,7 +48,7 @@ def generate(api, setUp=None):
             """ verify that the resource has a Test Data generating class
             asssociated to it
             """
-            if not hasattr(resource._meta, 'test_data'):
+            if not hasattr(resource._meta, 'testdata'):
 
                 msg = "Missing example data for resource: %(res)s \n"
                 msg += "-Did you create a TestData child class for %(res)s?\n"
