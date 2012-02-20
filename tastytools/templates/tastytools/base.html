@@ -5,14 +5,38 @@
         {% staticlink js:tastytools/lib/jquery-1.7.1.js %}
         {% staticlink js:tastytools/lib/underscore %}
         {% staticlink js:tastytools/lib/backbone %}
-        {% staticlink css:tastytools/style %}
+        {% staticlink js:tastytools/lib/bootstrap.min.js %}
+        {% staticlink css:tastytools/lib/bootstrap.min.css %}
+        {# {% staticlink css:tastytools/style %} #}
 
         {% block extra_head %}
         {% endblock %}
+        <style type="text/css">
+            .well {
+                padding: 20px 0;
+            }
+            dt {
+                margin-top: 20px;
+            }
+            dt em {
+                color: #999;
+                padding: 0 10px;
+            }
+            .resources_table th {
+                text-align: right;
+                padding-right: 20px;
+            }
+            .methods .label {
+                margin: 0 5px;
+            }
+
+        </style>
     </head>
 
     <body>
+        <div class="container">
         {% block content %}
         {% endblock %}
+        </div>
     </body>
 </html>

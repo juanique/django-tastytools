@@ -13,7 +13,7 @@
     {% staticlink css:tastytools/lib/SyntaxHighlighter/shThemeDefault %}
 
     {% staticlink js:tastytools/api.doc %}
-    {% staticlink css:tastytools/api.doc %}
+    {# {% staticlink css:tastytools/api.doc %} #}
 
     <style type='text/css'>
 
@@ -21,94 +21,113 @@
     </style>
 
     <script type="text/template" id="resources_btn_template">
-        <a href='#' class='myButton btn_<%=resource_name%>'><%= resource_name %></button>
+        <li><a data-toggle="pill" href="#" class="btn_<%=resource_name%>" >
+                <%=resource_name%>
+        </a></li>
     </script>
 
     <script type="text/template" id="resource_field_template">
-        <li class='resource_field'>
-            <h4>
-                <%= name %>
-                <span class='field_flag flag_nullable'>nullable</span>
-                <span class='field_flag flag_readonly'>readonly</span>
-                <span class='field_flag flag_blank'>blank</span>
-                <span class='field_flag flag_unique'>unique</span>
-            </h4>
-            <p><%= help_text %></p>
-
-            <table>
-                <tr>
-                    <th>Type</th>
-                    <td><%= type %></td>
-                </tr>
-                <% if(default_value != "No default provided."){ %>
-                    <tr>
-                        <th>Default</th>
-                        <td><%= default_value %></td>
-                    </tr>
-                <% } %>
-            </table>
-        </li>
+        <% var has_default = default_value != "No default provided."; %>
+        <dt>
+            <div> <%= name %> </div>
+            <div>
+            <% _.each(
+                    _.filter(['nullable', 'readonly', 'unique', 'blank'], 
+                        function(item) { return eval(item) }
+                    ), 
+                    function(item) { %>
+                <span class='label'><%=item%></span>
+            <% }) %>
+            </div>
+            <div>
+                <em><%= type %></em>
+                <em class="<%= has_default? '':'no_default' %>"><%= default_value %></em>
+            </div>
+        </dt>
+        <dd><%= help_text %></dd>
     </script>
 
     <script type="text/template" id="resource_template">
-        <h2 id='anchor_<%= resource_name %>'><%= resource_name %></h2>
-        <table class='resources_table'>
-            <tr>
-                <th>List URI</th>
-                <td><%= list_endpoint %></td>
-            <tr>
-            <tr>
-                <th>Schema URI</th>
-                <td><%= schema %></td>
-            <tr>
-            <tr>
-                <th>Default Format</th>
-                <td><%= default_format %></td>
-            <tr>
-            </tr>
-                <th>Default Limit</th>
-                <td><%= default_limit %></td>
-            <tr>
-            </tr>
-                <th>List Methods</th>
-                <td class='methodsBox list_methods'>
-                    <span class='method get_method'>GET</span>
-                    <span class='method post_method'>POST</span>
-                    <span class='method delete_method'>DELETE</span>
-                    <span class='method put_method'>PUT</span>
-                    <span class='method patch_method'>PATCH</span>
-                </td>
-            <tr>
-            </tr>
-                <th>Detail Methods</th>
-                <td class='methodsBox detail_methods'>
-                    <span class='method get_method'>GET</span>
-                    <span class='method post_method'>POST</span>
-                    <span class='method delete_method'>DELETE</span>
-                    <span class='method put_method'>PUT</span>
-                    <span class='method patch_method'>PATCH</span>
-                </td>
-            </tr>
-        </table>
+        <%  var methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']; 
+            console.log(methods); 
+        %>
+        <h2 id='anchor_<%= resource_name %>'>Resource Something<%= resource_name %></h2>
+        <div class="well row">
+            <table class='resources_table span8'>
+                <tr>
+                    <th>List URI</th>
+                    <td><%= list_endpoint %></td>
+                <tr>
+                <tr>
+                    <th>Schema URI</th>
+                    <td><%= schema %></td>
+                <tr>
+                <tr>
+                    <th>Default Format</th>
+                    <td><%= default_format %></td>
+                <tr>
+                </tr>
+                    <th>Default Limit</th>
+                    <td><%= default_limit %></td>
+                <tr>
+                </tr>
+                    <th>List Methods</th>
+                    <td class='methods'>
+                    <% _.each(methods, function(method) {
+                            var is_allowed= allowed_list_http_methods.indexOf(method.toLowerCase())>-1;
+                    %>
+                        <span class="label label-<%=is_allowed?'success':'important'%>" >
+                            <%=method%>
+                        </span>
+                    <% }) %>
+                    </td>
+                <tr>
+                </tr>
+                    <th>Detail Methods</th>
+                    <td class='methods'>
+                    <% _.each(methods, function(method) {
+                            var is_allowed= allowed_detail_http_methods.indexOf(method.toLowerCase())>-1;
+                    %>
+                        <span class="label label-<%=is_allowed?'success':'important'%>" >
+                            <%=method%>
+                        </span>
+                    <% }) %>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
         <h3>Fields</h3>
-        <ul class='fields_list'>
+        <ul class='fields_list row'>
         </ul>
 
-        <h3>Example data</h3>
-        <% if(obj.POST){ %>
-            <h4>POST</h4>
-            <pre class="brush: js"><%= POST %></pre>
-        <% } %>
-        <% if(obj.GET){ %>
-            <h4>GET</h4>
-            <pre class="brush: js"><%= GET %></pre>
-        <% } %>
+        <div class="row">
+            <h3 class="span10" >Example data</h3>
+            <% if(obj.POST){ %>
+                <div class="span4">
+                    <h4>POST</h4>
+                    <pre class="brush: js"><%= POST %></pre>
+                </div>
+            <% } %>
+            <% if(obj.GET){ %>
+                <div class="span4">
+                    <h4>GET</h4>
+                    <pre class="brush: js"><%= GET %></pre>
+                </div>
+            <% } %>
+        </div>
 
     </script>
 {% endblock %}
 
 {% block content %}
-    <div id='resource_list'></div>
+    <div class="row">
+        <div class="span2">
+            <h2>Resources</h2>
+            <ul id='resource_list' class="nav nav-pills nav-stacked"></ul>
+        </div>
+        <div id="resource" class="offset1 span8">
+        </div>
+    </div>
 {% endblock %}
 
