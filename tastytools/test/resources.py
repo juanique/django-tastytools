@@ -10,6 +10,7 @@ class Related(object):
     Uri = "URI"
     Full = "FULL"
 
+
 class TestData(object):
 
     def __init__(self, api, force=None, related=None, id=None):
@@ -38,7 +39,7 @@ class TestData(object):
     def set_related(self, obj):
 
         for args in self.related_data:
-            args['force'] = {args['related_name'] : obj}
+            args['force'] = {args['related_name']: obj}
             del args['related_name']
             self.set(**args)
 
@@ -47,11 +48,11 @@ class TestData(object):
 
         if related_name:
             self.related_data.append({
-                'name' : name,
-                'constant' : constant,
-                'resource' : resource,
-                'count' : count,
-                'related_name' : related_name
+                'name': name,
+                'constant': constant,
+                'resource': resource,
+                'count': count,
+                'related_name': related_name,
             })
             return
 
@@ -100,7 +101,7 @@ class TestData(object):
 
 
 class ResourceTestData(object):
-    
+
     test_session = None
 
     def __init__(self, api, resource=None):
@@ -109,7 +110,7 @@ class ResourceTestData(object):
 
         if resource is None:
             resource = self.resource
-        
+
         if resource is None:
             msg = "ResourceTestData initialized without a resource. "\
                 "Did you forget to override the constructor?"
@@ -142,13 +143,16 @@ class ResourceTestData(object):
         location = self.resource.get_resource_uri(bundle)
         return location, bundle.obj
 
-    def create_test_model(self, data=False, force=False, id=None, *args, **kwargs):
-        '''Creates a test model (or object asociated with
-        the resource and returns it'''
+    def create_test_model(self, data=False, force=False, id=None, *args,
+            **kwargs):
+        '''Creates a test model (or object asociated with the resource and
+        returns it
 
+        '''
         force = force or {}
 
-        data = data or self.sample_data(related=Related.Model, force=force, id=id)
+        data = data or self.sample_data(related=Related.Model, force=force,
+                id=id)
         model_class = self.resource._meta.object_class
 
         valid_data = {}
@@ -172,9 +176,9 @@ class ResourceTestData(object):
 
             except KeyError:
                 pass
-        
+
         #print valid_data
-        
+
         try:
             model = model_class(**valid_data)
             model.save()
@@ -185,9 +189,9 @@ class ResourceTestData(object):
                 #print "Got %s %s" % (model_class.__name__, id)
             else:
                 raise e
-        
-        #print model    
-        
+
+        #print model
+
         for m2m_field, values in m2m.items():
             for value in values:
                 getattr(model, m2m_field).add(value)
@@ -195,14 +199,14 @@ class ResourceTestData(object):
         data.set_related(model)
         return model
 
-
     #@property
     def sample_data(self, related=Related.Model, force=False, id=None):
         '''Returns the full a full set of data as an _meta.testdata for
-        interacting with the resource'''
-        
+        interacting with the resource
+
+        '''
         data = TestData(self.api, force, related, id=id)
         return self.get_data(data)
-        
+
     def get_data(self, data):
         return data

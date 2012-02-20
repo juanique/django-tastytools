@@ -23,14 +23,14 @@ class Client(DjangoClient):
 
     def __init__(self, *args, **kwargs):
         super(Client, self).__init__(*args, **kwargs)
-    
+
     def login(self, user=None, **kwargs):
         if len(kwargs) == 0 and user is not None:
-            return super(Client, self).login(username=user.username, 
+            return super(Client, self).login(username=user.username,
                 password=user.username)
         else:
             return super(Client, self).login(**kwargs)
-    
+
     def _path_or_resource(self, path, obj=None):
         '''If passed a Resource object, will return its URI.
            If passed a path, will return the path unmodified'''
@@ -78,10 +78,10 @@ class Client(DjangoClient):
         """
         Send a resource patch to the server using PATCH.
         """
-        
+
         data = data or {}
         path = self._path_or_resource(path, data)
-        
+
         if type(data) == dict and content_type == "application/json":
             data = simplejson.dumps(data, cls=json.DjangoJSONEncoder)
 
@@ -178,7 +178,7 @@ class Client(DjangoClient):
 
 
 class MultiTestCase(object):
-    
+
     def setUp(self):
         print "setup"
         pass
@@ -202,8 +202,9 @@ def create_multi_meta(multi_class):
     '''Creates the meta class for a test case generator, the supplied
     generator class must implement the generate_arguments() and
     generate_test_name() methods, all other class methods that generate tests
-    must be called "multi_*"'''
+    must be called "multi_*"
 
+    '''
     class MetaTest(type):
 
         def __new__(mcs, name, bases, attrs):
