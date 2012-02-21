@@ -27,93 +27,83 @@
     </script>
 
     <script type="text/template" id="resource_field_template">
-        <% var has_default = default_value != "No default provided."; %>
-        <dt>
-            <div> <%= name %> </div>
-            <div>
-            <% _.each(
-                    _.filter(['nullable', 'readonly', 'unique', 'blank'], 
-                        function(item) { return eval(item) }
-                    ), 
-                    function(item) { %>
-                <span class='label'><%=item%></span>
-            <% }) %>
-            </div>
-            <div>
-                <em><%= type %></em>
-                <em class="<%= has_default? '':'no_default' %>"><%= default_value %></em>
-            </div>
-        </dt>
-        <dd><%= help_text %></dd>
+        <%  var has_default = default_value != "No default provided."; %>
+            <dt>
+                <div class="span2"><%= name %></div>
+                <div class="span1">
+                    <em class="type"><%= type %></em>
+                </div>
+                <div class="span3">
+                    <em class="default <%= has_default? '':'default-none' %>"><%= default_value %></em>
+                </div>
+                <div class="span2">
+                <% _.each(
+                        _.filter(['nullable', 'readonly', 'unique', 'blank'], 
+                            function(item) { return eval(item) }
+                        ), 
+                        function(item) { %>
+                    <span class='label'><%=item%></span>
+                <% }) %>
+                </div>
+            </dt>
+            <dd class="offset2 span6"><%= help_text %></dd>
+        </div>
     </script>
 
     <script type="text/template" id="resource_template">
         <%  var methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']; 
-            console.log(methods); 
         %>
-        <h2 id='anchor_<%= resource_name %>'>Resource Something<%= resource_name %></h2>
+        <h2 id='anchor_<%= resource_name %>'><%= resource_name %></h2>
         <div class="well row">
             <table class='resources_table span8'>
                 <tr>
                     <th>List URI</th>
                     <td><%= list_endpoint %></td>
-                <tr>
+                </tr>
                 <tr>
                     <th>Schema URI</th>
                     <td><%= schema %></td>
-                <tr>
+                </tr>
                 <tr>
                     <th>Default Format</th>
                     <td><%= default_format %></td>
-                <tr>
                 </tr>
+                <tr>
                     <th>Default Limit</th>
                     <td><%= default_limit %></td>
-                <tr>
                 </tr>
-                    <th>List Methods</th>
-                    <td class='methods'>
-                    <% _.each(methods, function(method) {
-                            var is_allowed= allowed_list_http_methods.indexOf(method.toLowerCase())>-1;
-                    %>
+                <% _.each( ['List', 'Detail'], function(operation) { %>
+                    <tr>
+                        <th><%= operation %> Methods</th>
+                        <td class='methods'>
+                        <% _.each(methods, function(method) {
+                            var o = operation.toLowerCase();
+                            var m = method.toLowerCase();
+
+                            var methods_list = eval("allowed_"+o+"_http_methods");
+                            var is_allowed= methods_list.indexOf(m)>-1;
+                        %>
                         <span class="label label-<%=is_allowed?'success':'important'%>" >
                             <%=method%>
                         </span>
-                    <% }) %>
-                    </td>
-                <tr>
-                </tr>
-                    <th>Detail Methods</th>
-                    <td class='methods'>
-                    <% _.each(methods, function(method) {
-                            var is_allowed= allowed_detail_http_methods.indexOf(method.toLowerCase())>-1;
-                    %>
-                        <span class="label label-<%=is_allowed?'success':'important'%>" >
-                            <%=method%>
-                        </span>
-                    <% }) %>
-                    </td>
-                </tr>
+                        <% }) %>
+                        </td>
+                    </tr>
+                <% }) %>
             </table>
         </div>
 
         <h3>Fields</h3>
-        <ul class='fields_list row'>
-        </ul>
+        <ul class='fields_list row'></ul>
 
-        <div class="row">
-            <h3 class="span10" >Example data</h3>
+            <h3 class="span8" >Example data</h3>
             <% if(obj.POST){ %>
-                <div class="span4">
-                    <h4>POST</h4>
-                    <pre class="brush: js"><%= POST %></pre>
-                </div>
+                <h4>POST</h4>
+                <pre class="brush: js"><%= POST %></pre>
             <% } %>
             <% if(obj.GET){ %>
-                <div class="span4">
-                    <h4>GET</h4>
-                    <pre class="brush: js"><%= GET %></pre>
-                </div>
+                <h4>GET</h4>
+                <pre class="brush: js"><%= GET %></pre>
             <% } %>
         </div>
 
@@ -122,8 +112,10 @@
 
 {% block content %}
     <div class="row">
+        <h2 class="span2">Resources</h2>
+    </div>
+    <div class="row">
         <div class="span2">
-            <h2>Resources</h2>
             <ul id='resource_list' class="nav nav-pills nav-stacked"></ul>
         </div>
         <div id="resource" class="offset1 span8">

@@ -112,10 +112,10 @@ class ResourceView extends Backbone.View
     else
       data[METHOD] = "// not allowed"
 
-  highlightIfAllowed : (data, action, method) ->
-    selector = ".#{action}_methods .#{method}_method"
-    allowed_methods = data["allowed_#{action}_http_methods"]
-    $(@el).find(selector).toggleClass('allowed', method in allowed_methods)
+  #highlightIfAllowed : (data, action, method) ->
+  #  selector = ".#{action}_methods .#{method}_method"
+  #  allowed_methods = data["allowed_#{action}_http_methods"]
+  #  $(@el).find(selector).toggleClass('allowed', method in allowed_methods)
 
   render : ->
     $(@el).empty()
@@ -160,18 +160,15 @@ class ResourceListView extends Backbone.View
     for resourceName, resourceProps of @model.toJSON()
       tmpl_data = resource_name : resourceName
       jqBtn = $(@resTemplate(tmpl_data))
-      do (resourceProps) =>
+      do (resourceName, resourceProps) =>
         jqBtn.click =>
           @currentModelView.model.set resourceProps
+          @currentModelView.model.resourceName = resourceName
       $(@el).append(jqBtn)
 
     @currentModelView.render()
-    #$(@el).append(@currentModelView.el)
-    #$('#resource_list').empty().append(@el)
 
 $(document).ready ->
-  console.log "document ready"
-
   resources = new ResourceList()
   resourcesView = new ResourceListView(model:resources)
   resources.fetch()

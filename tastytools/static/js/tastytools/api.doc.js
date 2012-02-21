@@ -179,12 +179,6 @@
         return data[METHOD] = "// not allowed";
       }
     };
-    ResourceView.prototype.highlightIfAllowed = function(data, action, method) {
-      var allowed_methods, selector;
-      selector = "." + action + "_methods ." + method + "_method";
-      allowed_methods = data["allowed_" + action + "_http_methods"];
-      return $(this.el).find(selector).toggleClass('allowed', __indexOf.call(allowed_methods, method) >= 0);
-    };
     ResourceView.prototype.render = function() {
       var data, field, fieldView, jqFieldsList, _i, _len, _ref;
       $(this.el).empty();
@@ -238,9 +232,10 @@
       var jqBtn, resourceName, resourceProps, tmpl_data, _fn, _ref;
       $(this.el).empty();
       _ref = this.model.toJSON();
-      _fn = __bind(function(resourceProps) {
+      _fn = __bind(function(resourceName, resourceProps) {
         return jqBtn.click(__bind(function() {
-          return this.currentModelView.model.set(resourceProps);
+          this.currentModelView.model.set(resourceProps);
+          return this.currentModelView.model.resourceName = resourceName;
         }, this));
       }, this);
       for (resourceName in _ref) {
@@ -249,7 +244,7 @@
           resource_name: resourceName
         };
         jqBtn = $(this.resTemplate(tmpl_data));
-        _fn(resourceProps);
+        _fn(resourceName, resourceProps);
         $(this.el).append(jqBtn);
       }
       return this.currentModelView.render();
@@ -258,7 +253,6 @@
   })();
   $(document).ready(function() {
     var resources, resourcesView;
-    console.log("document ready");
     resources = new ResourceList();
     resourcesView = new ResourceListView({
       model: resources
