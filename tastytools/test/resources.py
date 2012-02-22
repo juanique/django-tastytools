@@ -14,14 +14,13 @@ class Related(object):
 
 class TestData(object):
 
-    def __init__(self, api, force=None, related=None, id=None, db=None):
+    def __init__(self, api, force=None, related=None, id=None):
         self.api = api
         self.force = force or {}
         self.related = related
         self.data = {}
         self.related_data = []
         self.id = id
-        self.db = db
 
     def __getitem__(self, name):
         return self.data[name]
@@ -106,7 +105,7 @@ class ResourceTestData(object):
 
     test_session = None
 
-    def __init__(self, api, resource=None):
+    def __init__(self, api, resource=None, db=None):
         '''Constructor - requires the resource name or class to be registered
         on the given api.'''
 
@@ -122,6 +121,8 @@ class ResourceTestData(object):
         if type(resource) is str:
             resource = self.api.resource(resource)
         self.resource = resource
+
+        self.db = db
 
     @property
     def post(self):
