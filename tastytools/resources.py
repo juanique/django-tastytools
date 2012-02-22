@@ -1,5 +1,6 @@
 from tastypie.resources import Resource as TastyResource, ModelResource as TastyModelResource
 from django.conf.urls.defaults import url
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from tastytools import fields
 from test.resources import TestData
 from django.http import HttpResponse
@@ -8,6 +9,7 @@ from tastypie import http
 from tastytools.authentication import AuthenticationByMethod
 from tastypie.authentication import Authentication
 from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.utils import trailing_slash
 
 class Resource(TastyResource):
     resource_uri = fields.CharField(help_text='URI of the resource.',
@@ -17,6 +19,12 @@ class ModelResource(TastyModelResource):
 
     resource_uri = fields.CharField(help_text='URI of the resource.',
         readonly=True)
+
+    def __init__(self, *args, **kwargs):
+        super(ModelResource, self).__init__(*args, **kwargs)
+        for field_name, field_object in self.fields.items():
+            if field_name in getattr(self._meta, "uploads", []):
+                field_object.readonly = True
 
     def IHR(self, response_class, data, request=None):
         return ImmediateHttpResponse(self.create_response(request, data, response_class))
@@ -100,18 +108,50 @@ class ModelResource(TastyModelResource):
 
         return 'patch' in allowed
 
-    def override_urls(self):
+
+    def base_urls(self):
+        urls = []
+
         urlexp = r'^(?P<resource_name>%s)/example/'
         urlexp %= self._meta.resource_name
+        urls.append( url(urlexp, self.wrap_view('get_example_data_view'), 
+                name='api_get_example_data'))
 
         urlexp_2 = r'^(?P<resource_name>%s)/schema/'
         urlexp_2 %= self._meta.resource_name
-        return [
-            url(urlexp, self.wrap_view('get_example_data_view'),
-                name='api_get_example_data'),
-            url(urlexp_2, self.wrap_view('get_doc_data_view'),
-                name='api_get_doc_data'),
-        ]
+        urls.append( url(urlexp_2, self.wrap_view('get_doc_data_view'),
+                name='api_get_doc_data'))
+
+        upload_url = r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/attach%s$"
+        upload_url %= ( self._meta.resource_name, trailing_slash() )
+        urls.append( url(upload_url, self.wrap_view("attach_upload"),
+                name="api_attach_upload"))
+
+        urls += super(ModelResource, self).base_urls()
+        return urls
+
+    def attach_upload(self, request, resource_name, pk, **kwargs):
+        """Attaches uploaded files to the resource"""
+
+        try:
+            obj = self.cached_obj_get(
+                    request=request, pk=pk, 
+                    **self.remove_api_resource_names(kwargs))
+        except ObjectDoesNotExist:
+            return http.HttpNotFound()
+        except MultipleObjectsReturned:
+            return http.HttpMultipleChoices("More than one resource is found at this URI.")
+
+        for field_name in getattr(self._meta, "uploads", []):
+            uploaded_file = request.FILES.get(field_name, None)
+            if uploaded_file is not None:
+                setattr(obj, field_name, uploaded_file)
+        obj.save()
+        bundle = self.build_bundle(obj=obj, request=request)
+        bundle = self.full_dehydrate(bundle)
+        bundle = self.alter_detail_data_to_serialize(request, bundle)
+        return self.create_response(request, bundle, http.HttpAccepted)
+
 
     def create_test_resource(self, force=False, *args, **kwargs):
         force = force or {}
