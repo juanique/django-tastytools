@@ -18,11 +18,10 @@ An example in the case of an API, is a help text on the fields
 Quick Start
 ===========
 
-Assuming you have a tastypie api:
+Assuming you have a tastypie api and have already read the `tastypie docs`_:
 
 1. Add ``tastytools`` to ``INSTALLED_APPS``.
-2. Create an ``api`` directory in your project root  with a bare ``__init__.py``.
-3. Create an ``api/<my_app>.py`` file and place the following in it::
+2. Create an file in ``<my_app>/api/tools.py``, and place the following in it::
 
     from tastytools.api import Api
     from <my_app>.api.resources import MyModelResource
@@ -32,7 +31,7 @@ Assuming you have a tastypie api:
     api.register(MyModelResource)
     api.register(resources=[AnotherResource, YetAnotherResource])
 
-4. In your root URLconf, add the following code (around where the tastypie code might be)::
+3. In your root URLconf, add the following code (around where the tastypie code might be)::
 
     from tastypie.api import Api
     from my_app.api.resources import MyModelResource
@@ -47,7 +46,7 @@ Assuming you have a tastypie api:
       (r'^tastytools/', include('tastytools.urls'), {'api_name': api_name}),
     )
 
-5. got to http://localhost:8000/tastytools/v1/.
+4. got to http://localhost:8000/tastytools/v1/.
 
 As you can see, now you have documentation for anyone who wants to consume
 your api resources!
@@ -61,3 +60,4 @@ the necessary bits via the included ``requirements.txt``:
 * django-tastypie (http://django-tastypie.readthedocs.org/)
 
 .. _Pip: http://pip.openplans.org/
+.. _`tastypie docs`: http://django-tastypie.readthedocs.org/en/latest/index.html

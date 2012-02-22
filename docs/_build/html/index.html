@@ -71,13 +71,11 @@ An example in the case of an API, is a help text on the fields</p>
 </div>
 <div class="section" id="quick-start">
 <h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h1>
-<p>Assuming you have a tastypie api:</p>
+<p>Assuming you have a tastypie api and have already read the <a class="reference external" href="http://django-tastypie.readthedocs.org/en/latest/index.html">tastypie docs</a>:</p>
 <ol class="arabic">
 <li><p class="first">Add <tt class="docutils literal"><span class="pre">tastytools</span></tt> to <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>.</p>
 </li>
-<li><p class="first">Create an <tt class="docutils literal"><span class="pre">api</span></tt> directory in your project root  with a bare <tt class="docutils literal"><span class="pre">__init__.py</span></tt>.</p>
-</li>
-<li><p class="first">Create an <tt class="docutils literal"><span class="pre">api/&lt;my_app&gt;.py</span></tt> file and place the following in it:</p>
+<li><p class="first">Create an file in <tt class="docutils literal"><span class="pre">&lt;my_app&gt;/api/tools.py</span></tt>, and place the following in it:</p>
 <div class="highlight-python"><pre>from tastytools.api import Api
 from &lt;my_app&gt;.api.resources import MyModelResource
 from &lt;my_app&gt;.api.resources import AnoterResource, YetAnotherResource
