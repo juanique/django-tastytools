@@ -1,6 +1,6 @@
 from tastypie.resources import Resource as TastyResource, ModelResource as TastyModelResource
 from django.conf.urls.defaults import url
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from tastytools import fields
 from test.resources import TestData
 from django.http import HttpResponse
@@ -114,8 +114,8 @@ class ModelResource(TastyModelResource):
 
         urlexp = r'^(?P<resource_name>%s)/example/'
         urlexp %= self._meta.resource_name
-        urls.append( url(urlexp, self.wrap_view('get_example_data_view'), 
-                name='api_get_example_data'))
+        urls.append( url(urlexp, self.wrap_view('get_testdata_data_view'),
+                name='get_testdata_data_view'))
 
         urlexp_2 = r'^(?P<resource_name>%s)/schema/'
         urlexp_2 %= self._meta.resource_name
@@ -135,7 +135,7 @@ class ModelResource(TastyModelResource):
 
         try:
             obj = self.cached_obj_get(
-                    request=request, pk=pk, 
+                    request=request, pk=pk,
                     **self.remove_api_resource_names(kwargs))
         except ObjectDoesNotExist:
             return http.HttpNotFound()
