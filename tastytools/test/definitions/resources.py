@@ -41,29 +41,29 @@ def generate(api, setUp=None):
             self.assertEqual(1, get_response.data['meta']['total_count'], msg)
 
         @staticmethod
-        def multi_example_data_existence(self, resource_name, resource):
+        def multi_testdata_data_existence(self, resource_name, resource):
             #Check existence
             for method in ['POST', 'GET']:
                 try:
-                    if not hasattr(resource._meta, 'example'):
-                        msg = "Missing example data for resource: %s "\
-                            "Did you forget to set %s.Meta.example_class?"
-                        msg %= (resource_name, resource.__class__.__name__)
+                    if not hasattr(resource._meta, 'testdata'):
+                        msg = "Missing testdata data for resource: %s "\
+                            "Did you forget to define a TestData class for the resource?"
+                        msg %= (resource_name)
                         self.assertTrue(False, msg)
 
                     if api.resource_allows_method(resource_name, method):
-                        example = getattr(resource._meta.example,
+                        testdata = getattr(resource._meta.testdata,
                             method.lower())
                         msg = "Example %s data is not a TestData or dict "\
                             "but %s"
 
-                        msg %= (method, example.__class__)
-                        is_testdata = issubclass(example.__class__, TestData)
-                        is_dict = type(example) == dict
+                        msg %= (method, testdata.__class__)
+                        is_testdata = issubclass(testdata.__class__, TestData)
+                        is_dict = type(testdata) == dict
                         self.assertTrue(is_testdata or is_dict, msg)
 
                 except (AttributeError, KeyError), err:
-                    message = "Missing example %s data for %s resource.: %s"
+                    message = "Missing testdata %s data for %s resource.: %s"
                     message %= (method, resource_name, err)
                     self.assertTrue(False, message)
 
@@ -75,7 +75,7 @@ def generate(api, setUp=None):
                 post_response = self.client.post(
                     resource.get_resource_list_uri(), post_data)
 
-                msg = "Failed to POST example data for resource %s"\
+                msg = "Failed to POST testdata data for resource %s"\
                     "S: %s. R(%s): %s"
                 msg %= (resource_name,
                         post_data,
@@ -84,7 +84,7 @@ def generate(api, setUp=None):
                 self.assertEqual(post_response.status_code, 201, msg)
 
         @staticmethod
-        def multi_example_get_detail(self, resource_name, resource):
+        def multi_testdata_get_detail(self, resource_name, resource):
 
             if api.resource_allows_detail(resource_name, 'GET'):
                 uri, res = resource.create_test_resource()
@@ -98,34 +98,34 @@ def generate(api, setUp=None):
                 response_dict = get_response.data
 
                 object_keys = set(response_dict.keys())
-                expected_keys = set(resource._meta.example.get.keys())
+                expected_keys = set(resource._meta.testdata.get.keys())
 
-                msg = "GET data does not match the example for resource "\
+                msg = "GET data does not match the testdata for resource "\
                     "%s - EXAMPLE: %s vs GET: %s"
                 msg %= (resource_name, expected_keys, object_keys)
                 self.assertEqual(expected_keys, object_keys, msg)
 
         @staticmethod
-        def multi_declared_example_fields_coherence(self, resource_name,
+        def multi_declared_testdata_fields_coherence(self, resource_name,
             resource):
 
             #only if resource allows detail GET
             if 'GET' not in resource._meta.detail_allowed_methods:
                 return
 
-            example_fields = set(resource.example_fields)
+            testdata_fields = set(resource._meta.testdata_fields)
             declared_fields = set(resource.declared_fields.keys())
 
-            delta = example_fields - declared_fields
+            delta = testdata_fields - declared_fields
             if len(delta) > 0:
-                msg = "%s.%s field appears on the examples but it is "\
+                msg = "%s.%s field appears on the testdata but it is "\
                     "not declared."
                 msg %= (resource_name, delta.pop())
                 self.assertTrue(False, msg)
 
-            delta = declared_fields - example_fields
+            delta = declared_fields - testdata_fields
             if len(delta) > 0:
-                msg = "%s.%s field is declared but is missing from examples."
+                msg = "%s.%s field is declared but is missing from testdata."
                 msg %= (resource_name, delta.pop())
                 self.assertTrue(False, msg)
 
@@ -133,7 +133,7 @@ def generate(api, setUp=None):
         def generate_arguments():
             args = []
             for resource_name, resource in api._registry.items():
-                if hasattr(resource._meta, "example_class"):
+                if hasattr(resource._meta, "testdata"):
                     args.append((resource_name, resource))
             return args
 
@@ -146,8 +146,8 @@ def generate(api, setUp=None):
             test_name = test.__name__
             func_name = test_name.replace("multi_", "setup_")
             self.client = Client()
-            if hasattr(resource._meta.example, func_name):
-                getattr(resource._meta.example, func_name)(self)
+            if hasattr(resource._meta.testdata, func_name):
+                getattr(resource._meta.testdata, func_name)(self)
             user_setUp(self, test_name, resource_name, resource)
 
     class TestResources(TestCase):

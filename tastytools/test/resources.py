@@ -12,7 +12,7 @@ class Related(object):
 
 class TestData(object):
 
-    def __init__(self, api, force, related, id=None):
+    def __init__(self, api, force=None, related=None, id=None):
         self.api = api
         self.force = force or {}
         self.related = related
@@ -198,7 +198,7 @@ class ResourceTestData(object):
 
     #@property
     def sample_data(self, related=Related.Model, force=False, id=None):
-        '''Returns the full a full set of data as an example for
+        '''Returns the full a full set of data as an _meta.testdata for
         interacting with the resource'''
         
         data = TestData(self.api, force, related, id=id)

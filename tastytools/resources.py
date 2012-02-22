@@ -1,5 +1,6 @@
-from tastypie.resources import Resource, ModelResource as TastyModelResource
+from tastypie.resources import Resource as TastyResource, ModelResource as TastyModelResource
 from django.conf.urls.defaults import url
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from tastytools import fields
 from test.resources import TestData
 from django.http import HttpResponse
@@ -8,12 +9,25 @@ from tastypie import http
 from tastytools.authentication import AuthenticationByMethod
 from tastypie.authentication import Authentication
 from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.utils import trailing_slash
 
+class Resource(TastyResource):
+    resource_uri = fields.CharField(help_text='URI of the resource.',
+        readonly=True)
 
 class ModelResource(TastyModelResource):
 
     resource_uri = fields.CharField(help_text='URI of the resource.',
         readonly=True)
+
+    def __init__(self, *args, **kwargs):
+        super(ModelResource, self).__init__(*args, **kwargs)
+        for field_name, field_object in self.fields.items():
+            if field_name in getattr(self._meta, "uploads", []):
+                field_object.readonly = True
+
+    def IHR(self, response_class, data, request=None):
+        return ImmediateHttpResponse(self.create_response(request, data, response_class))
 
     def save_m2m(self, bundle):
         """
@@ -60,10 +74,11 @@ class ModelResource(TastyModelResource):
                 related_mngr.add(*related_objs)
 
     def apply_authorization_limits(self, request, object_list):
-        if request.method in ['PUT', 'PATCH']:
+        if request is not None and request.method in ['PUT', 'PATCH']:
             json_data = simplejson.loads(request.raw_post_data)
             for key in json_data.keys():
-                if key in self.fields.keys() and self.fields[key].final:
+                fld = self.fields.get(key, None)
+                if fld is not None and getattr(fld, "final", False):
                     response = http.HttpUnauthorized("Error message")
                     raise ImmediateHttpResponse(response=response)
         return object_list
@@ -93,26 +108,58 @@ class ModelResource(TastyModelResource):
 
         return 'patch' in allowed
 
-    def override_urls(self):
+
+    def base_urls(self):
+        urls = []
+
         urlexp = r'^(?P<resource_name>%s)/example/'
         urlexp %= self._meta.resource_name
+        urls.append( url(urlexp, self.wrap_view('get_example_data_view'), 
+                name='api_get_example_data'))
 
         urlexp_2 = r'^(?P<resource_name>%s)/schema/'
         urlexp_2 %= self._meta.resource_name
-        return [
-            url(urlexp, self.wrap_view('get_example_data_view'),
-                name='api_get_example_data'),
-            url(urlexp_2, self.wrap_view('get_doc_data_view'),
-                name='api_get_doc_data'),
-        ]
+        urls.append( url(urlexp_2, self.wrap_view('get_doc_data_view'),
+                name='api_get_doc_data'))
+
+        upload_url = r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/attach%s$"
+        upload_url %= ( self._meta.resource_name, trailing_slash() )
+        urls.append( url(upload_url, self.wrap_view("attach_upload"),
+                name="api_attach_upload"))
+
+        urls += super(ModelResource, self).base_urls()
+        return urls
+
+    def attach_upload(self, request, resource_name, pk, **kwargs):
+        """Attaches uploaded files to the resource"""
+
+        try:
+            obj = self.cached_obj_get(
+                    request=request, pk=pk, 
+                    **self.remove_api_resource_names(kwargs))
+        except ObjectDoesNotExist:
+            return http.HttpNotFound()
+        except MultipleObjectsReturned:
+            return http.HttpMultipleChoices("More than one resource is found at this URI.")
+
+        for field_name in getattr(self._meta, "uploads", []):
+            uploaded_file = request.FILES.get(field_name, None)
+            if uploaded_file is not None:
+                setattr(obj, field_name, uploaded_file)
+        obj.save()
+        bundle = self.build_bundle(obj=obj, request=request)
+        bundle = self.full_dehydrate(bundle)
+        bundle = self.alter_detail_data_to_serialize(request, bundle)
+        return self.create_response(request, bundle, http.HttpAccepted)
+
 
     def create_test_resource(self, force=False, *args, **kwargs):
         force = force or {}
         try:
-            return self._meta.example.create_test_resource(force=force, *args,
+            return self._meta.testdata.create_test_resource(force=force, *args,
                 **kwargs)
         except AttributeError as e:
-            msg = "%s: Did you forget to define the example class for %s?"
+            msg = "%s: Did you forget to define a testdata class for %s?"
             msg %= (e, self.__class__.__name__)
             raise Exception(msg)
 
@@ -120,26 +167,26 @@ class ModelResource(TastyModelResource):
         if data is None:
             data = {}
 
-        return self._meta.example.create_test_model(data, *args, **kwargs)
+        return self._meta.testdata.create_test_model(data, *args, **kwargs)
 
     def get_test_post_data(self, data=None):
         if data is None:
             data = {}
 
-        #print "getting post data from %s" % self._meta.example
-        out = self._meta.example.post
+        #print "getting post data from %s" % self._meta.testdata
+        out = self._meta.testdata.post
         if isinstance(out, TestData):
             out = out.data
 
         return out
 
-    def get_example_data_view(self, request, api_name=None,
+    def get_testdata_data_view(self, request, api_name=None,
         resource_name=None):
 
-        if self._meta.example is not None:
+        if self._meta.testdata is not None:
             output = {
-                    'POST': self._meta.example.post,
-                    'GET': self._meta.example.get
+                    'POST': self._meta.testdata.post,
+                    'GET': self._meta.testdata.get
             }
 
             requested_type = request.GET.get('type', 'False')
