@@ -1,6 +1,7 @@
 from django.db.models.fields.related import ManyToManyField
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
 from django.db import IntegrityError
+from django.db.utils import ConnectionDoesNotExist
 from mockups import Mockup
 
 
@@ -105,7 +106,7 @@ class ResourceTestData(object):
 
     test_session = None
 
-    def __init__(self, api, resource=None):
+    def __init__(self, api, resource=None, db=None):
         '''Constructor - requires the resource name or class to be registered
         on the given api.'''
 
@@ -121,6 +122,8 @@ class ResourceTestData(object):
         if type(resource) is str:
             resource = self.api.resource(resource)
         self.resource = resource
+
+        self.db = db
 
     @property
     def post(self):
@@ -179,12 +182,19 @@ class ResourceTestData(object):
             except KeyError:
                 pass
 
-        #print valid_data
+        model = model_class(**valid_data)
 
         try:
-            model = model_class(**valid_data)
-            model.save()
-            #print "Created %s %s" % (model_class.__name__, id)
+            if self.db is not None:
+                databases = [self.db]
+            else:
+                databases = ['tastytools', 'test', '']
+
+            for db in databases:
+                try:
+                    model.save(using=db)
+                except ConnectionDoesNotExist:
+                    continue
         except IntegrityError as e:
             if id is not None:
                 model = model_class.objects.get(**valid_data)
