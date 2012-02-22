@@ -1,6 +1,7 @@
 from django.db.models.fields.related import ManyToManyField
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
 from django.db import IntegrityError
+from django.db.utils import ConnectionDoesNotExist
 
 
 class Related(object):
@@ -13,13 +14,14 @@ class Related(object):
 
 class TestData(object):
 
-    def __init__(self, api, force=None, related=None, id=None):
+    def __init__(self, api, force=None, related=None, id=None, db=None):
         self.api = api
         self.force = force or {}
         self.related = related
         self.data = {}
         self.related_data = []
         self.id = id
+        self.db = db
 
     def __getitem__(self, name):
         return self.data[name]
@@ -177,12 +179,19 @@ class ResourceTestData(object):
             except KeyError:
                 pass
 
-        #print valid_data
+        model = model_class(**valid_data)
 
         try:
-            model = model_class(**valid_data)
-            model.save()
-            #print "Created %s %s" % (model_class.__name__, id)
+            if self.db is not None:
+                databases = [self.db]
+            else:
+                databases = ['tastytools', 'test', '']
+
+            for db in databases:
+                try:
+                    model.save(using=db)
+                except ConnectionDoesNotExist:
+                    continue
         except IntegrityError as e:
             if id is not None:
                 model = model_class.objects.get(**valid_data)
