@@ -4,6 +4,7 @@ from django.test import TestCase
 from tastytools.test.client import Client, MultiTestCase, create_multi_meta
 from datetime import datetime
 from helpers import prepare_test_post_data
+import random
 
 
 def generate(api, setUp=None):
@@ -113,6 +114,35 @@ def generate(api, setUp=None):
                        bad_value, msg)
 
         @staticmethod
+        def multi_max_length_post(self, resource_name, resource, field_name,
+                field):
+
+            max_length = field.max_length
+            if max_length is not None and resource.can_create():
+                request_data = resource.get_test_post_data()
+
+                request_data[field_name] = \
+                UnderResourceFields.generate_string_by_length(
+                        field.max_length + 1)
+                msg = "%s.%s max length exceeded, and did not return"\
+                        " a bad request error"
+                msg %= (resource_name, field_name)
+                post_response = self.client.post(
+                        resource.get_resource_list_uri(),
+                        data=request_data, parse='json')
+
+                self.assertEqual(post_response.status_code, 400, msg)
+                data = post_response.data['errors']
+                has_error = False
+                for error in data:
+                    if error['name'] == "MaxLengthExceeded":
+                        has_error = True
+                if has_error is False:
+                    msg = '%s.%s max length exceeded, but MaxLengthExceeded error is not being reported'
+                    msg %= (resource_name, field_name)
+                    self.assertTrue(False, msg)
+
+        @staticmethod
         def multi_readonly_patch(self, resource_name, resource, field_name,
             field):
             """ for every read only field, tries to change it's value through
@@ -157,6 +187,19 @@ def generate(api, setUp=None):
         @staticmethod
         def generate_test_name(resource_name, resource, field_name, field):
             return "_".join([resource_name, field_name])
+
+        @staticmethod
+        def generate_string_by_length(length):
+
+            string = ""
+            for i in range(length):
+                rand_num = random.randint(0, 35)
+                if rand_num < 10:
+                    char = str(rand_num)
+                else:
+                    char = chr(55 + rand_num)
+                string += char
+            return string
 
         @staticmethod
         def setUp(self, *args, **kwargs):
