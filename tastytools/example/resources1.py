@@ -1,4 +1,4 @@
-from tastypie.resources import ModelResource
+from tastytools.resources import ModelResource
 from tastypie import fields
 from ..models import Test
 

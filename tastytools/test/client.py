@@ -6,7 +6,16 @@ from django.utils.http import urlencode
 from django.utils import simplejson
 from urlparse import urlparse
 from tastypie.resources import Resource
+from datetime import datetime
 
+def extended_response(method):
+    def wrapped(*args, **kwargs):
+        start = datetime.now()
+        response = method(*args, **kwargs)
+        response.crono_end = datetime.now()
+        response.crono_start = start
+        return response
+    return wrapped
 
 class Client(DjangoClient):
     '''Extends the django client to add patch method support and
@@ -14,8 +23,14 @@ class Client(DjangoClient):
 
     def __init__(self, *args, **kwargs):
         super(Client, self).__init__(*args, **kwargs)
-        
-    
+
+    def login(self, user=None, **kwargs):
+        if len(kwargs) == 0 and user is not None:
+            return super(Client, self).login(username=user.username,
+                password=user.username)
+        else:
+            return super(Client, self).login(**kwargs)
+
     def _path_or_resource(self, path, obj=None):
         '''If passed a Resource object, will return its URI.
            If passed a path, will return the path unmodified'''
@@ -57,15 +72,16 @@ class Client(DjangoClient):
         request_params.update(extra)
         return self.request(**request_params)
 
+    @extended_response
     def patch(self, path, data=None, follow=False,
         content_type="application/json", **extra):
         """
         Send a resource patch to the server using PATCH.
         """
-        
+
         data = data or {}
         path = self._path_or_resource(path, data)
-        
+
         if type(data) == dict and content_type == "application/json":
             data = simplejson.dumps(data, cls=json.DjangoJSONEncoder)
 
@@ -76,6 +92,7 @@ class Client(DjangoClient):
             response = self._handle_redirects(response, **extra)
         return response
 
+    @extended_response
     def post(self, path, data=None, content_type='application/json',
         follow=False, parse='json', **extra):
         """
@@ -100,6 +117,7 @@ class Client(DjangoClient):
                 response.data = None
         return response
 
+    @extended_response
     def put(self, path, data=None, content_type='application/json',
         follow=False, **extra):
         """
@@ -115,6 +133,7 @@ class Client(DjangoClient):
 
         return super(Client, self).put(path, data, content_type, **extra)
 
+    @extended_response
     def delete(self, path, follow=False, obj=None, **extra):
         """
         Overloads default Django client DELETE request to setdefault content type
@@ -124,13 +143,14 @@ class Client(DjangoClient):
         path = self._path_or_resource(path, obj)
         return super(Client, self).delete(path, **extra)
 
+    @extended_response
     def get(self, path, data=None, follow=False, parse='json', obj=None, **extra):
         """
         Overloads default Django client GET request to receive a parse
         parameter. When parse='json', the server's response is parsed using
         simplejson and loaded into request.data.
         """
-        
+
         path = self._path_or_resource(path, obj)
         data = data or {}
         response = super(Client, self).get(path, data, follow, **extra)
@@ -158,7 +178,7 @@ class Client(DjangoClient):
 
 
 class MultiTestCase(object):
-    
+
     def setUp(self):
         print "setup"
         pass
@@ -182,8 +202,9 @@ def create_multi_meta(multi_class):
     '''Creates the meta class for a test case generator, the supplied
     generator class must implement the generate_arguments() and
     generate_test_name() methods, all other class methods that generate tests
-    must be called "multi_*"'''
+    must be called "multi_*"
 
+    '''
     class MetaTest(type):
 
         def __new__(mcs, name, bases, attrs):
