@@ -51,6 +51,3 @@ http://tastytools.readthedocs.org/.
 What is tastytools?
 ===================
 Useful tools for developing REST services with django-tastypie
-
-:author: Ignacio Munizaga
-:date: 2011/09/16
