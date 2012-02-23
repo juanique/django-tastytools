@@ -5,7 +5,7 @@ Getting Started with TastyTools
 
 For example purposes, we'll be adding tools to the simple blog application that Tasytypie has in it's own tutorial.
 
-Here is the code we'll be using (taken from the tastypie quickstart and tutorial with a few minor changes).
+Here is the code we'll be using (taken from the `tastypie quickstart`_ and `tastypie tutorial`_  with a few minor changes).
 
 ``myapp/models.py``::
 
@@ -97,8 +97,9 @@ For our api to be easily consumable by users, we need documentation.
 Tastytools generates automatic documentation, so your clients always have 
 the latest api docs.
 For our simple application, we'll create a file: ``myapp/api/tools.py`` (in 
-the api folder created within your app in the `tastypie quickstart`_)
-First thing wee need to do is move much of the tastypie code form the urls.py
+the api folder created within your app in the `tastypie quickstart`_).
+
+First thing we need to do is move much of the tastypie code form the urls.py
 file to the new tools.py file::
 
     # myapp/api/tools.py
@@ -111,9 +112,9 @@ file to the new tools.py file::
 
 
 Notice that our Api object does not import form tastipie anymore, we'll be
-using from now the tastytools Api class, that inherits the tastypie Api class.
+using from now on the tastytools Api class, that inherits from the tastypie Api class.
 
-Our urls.py file now needs to import the api object to keep working, but we'll
+Our urls.py file now needs to import the api object to keep working, and we'll
 add a new line to generate our documentation::
 
     # urls.py
@@ -133,10 +134,9 @@ Neat right? it's now easy to navigate through your api resources.
 Generating Example Data for your Tastypie API
 =============================================
 
-Every great documentation has examples, so tastytools helps you with this by 
-generating semi-random data:
-The first thing we need to do is implement a Test Data class, Which generates
-data four our tests::
+Every great documentation has examples, so tastytools helps you with this by
+generating example data:
+Implement a Test Data class, it's the one in charge of creating data for our tests::
 
     # myapp/api/tools.py
     from tastytools.test.resources import ResourceTestData
@@ -180,8 +180,7 @@ have your tests in a folder
 
 .. note::
 
-    For the tests to work you need to specify the example_class field in the
-    Meta class of your resource.
+    For the tests to work you need to register TestData classes to the api object
 
 Now you have a lot of new tests for your api, which you can run with the
 ./manage.py tests myapp command. Fix them and your api will gain more than a 
