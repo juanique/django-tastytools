@@ -104,11 +104,11 @@ file to the new tools.py file::
 
     # myapp/api/tools.py
     from tastytools.api import Api
-    from trips.api.resources import EntrytResource, UserResource
+    from myapp.api.resources import EntryResource, UserResource
 
     v1_api = Api(api_name='v1')
-    v1_api.register(EntrytResource())
-    v1_api.register(UsertResource())
+    v1_api.register(EntryResource())
+    v1_api.register(UserResource())
 
 
 Notice that our Api object does not import form tastipie anymore, we'll be
@@ -143,9 +143,7 @@ Implement a Test Data class, it's the one in charge of creating data for our tes
 
 
     class EntryTestData(ResourceTestData):
-
-        def __init__(self, api):
-            ResourceTestData.__init__(self, api, 'entry')
+        resoruce = "entry"
 
         def get_data(self, data):
             data.set('user', resource='user')
@@ -154,6 +152,16 @@ Implement a Test Data class, it's the one in charge of creating data for our tes
             data.set('slug', 'lorem')
             data.set('body', 'Lorem ipsum ad his scripta blandit partiendo...')
             return data
+
+
+    class UserTestData(ResourceTestData):
+        resource = "user"
+
+        def get_data(self, data):
+        data.set('username', 'foo')
+        data.set('email', 'bar@foo.com')
+        return data
+
 
 Then register our test data to our api::
 
