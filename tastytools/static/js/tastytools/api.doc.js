@@ -1,14 +1,26 @@
 (function() {
-  var ResourceFieldModel, ResourceFieldView, ResourceList, ResourceListView, ResourceModel, ResourceView, dumpObjectIndented,
-    __hasProp = Object.prototype.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; },
-    __slice = Array.prototype.slice,
-    __indexOf = Array.prototype.indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
+  var ResourceFieldModel, ResourceFieldView, ResourceList, ResourceListView, ResourceModel, ResourceView, dumpObjectIndented;
+  var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
+    for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
+    function ctor() { this.constructor = child; }
+    ctor.prototype = parent.prototype;
+    child.prototype = new ctor;
+    child.__super__ = parent.prototype;
+    return child;
+  }, __slice = Array.prototype.slice, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __indexOf = Array.prototype.indexOf || function(item) {
+    for (var i = 0, l = this.length; i < l; i++) {
+      if (this[i] === item) return i;
+    }
+    return -1;
+  };
   dumpObjectIndented = function(obj, indent, isProp) {
     var isArray, isBoolean, isNumber, isObject, isString, item, ods, out, property, result, value;
-    if (indent == null) indent = "";
-    if (isProp == null) isProp = false;
+    if (indent == null) {
+      indent = "";
+    }
+    if (isProp == null) {
+      isProp = false;
+    }
     isArray = obj instanceof Array;
     isObject = typeof obj === "object" && !isArray;
     isString = typeof obj === "string";
@@ -41,7 +53,9 @@
       out += result;
       out += indent.slice(2);
       out += "}";
-      if (!isProp) out = indent + out;
+      if (!isProp) {
+        out = indent + out;
+      }
     }
     if (isArray) {
       if (obj.length === 0) {
@@ -65,31 +79,21 @@
     out = out.replace(/\n\n/g, "\n");
     return out;
   };
-
-  ResourceFieldModel = (function(_super) {
-
-    __extends(ResourceFieldModel, _super);
-
+  ResourceFieldModel = (function() {
+    __extends(ResourceFieldModel, Backbone.Model);
     function ResourceFieldModel() {
       ResourceFieldModel.__super__.constructor.apply(this, arguments);
     }
-
     return ResourceFieldModel;
-
-  })(Backbone.Model);
-
-  ResourceFieldView = (function(_super) {
-
-    __extends(ResourceFieldView, _super);
-
+  })();
+  ResourceFieldView = (function() {
+    __extends(ResourceFieldView, Backbone.View);
     function ResourceFieldView() {
       ResourceFieldView.__super__.constructor.apply(this, arguments);
     }
-
     ResourceFieldView.prototype.initialize = function(options) {
       return this.template = _.template($("#resource_field_template").html());
     };
-
     ResourceFieldView.prototype.render = function() {
       var data, flag, jqRendered, selector, _i, _len, _ref;
       data = this.model.toJSON();
@@ -103,43 +107,35 @@
       $(this.el).html(jqRendered);
       return this;
     };
-
     return ResourceFieldView;
-
-  })(Backbone.View);
-
-  ResourceModel = (function(_super) {
-
-    __extends(ResourceModel, _super);
-
+  })();
+  ResourceModel = (function() {
+    __extends(ResourceModel, Backbone.Model);
     function ResourceModel() {
       ResourceModel.__super__.constructor.apply(this, arguments);
     }
-
     ResourceModel.prototype.initialize = function(options) {
       _.bindAll(this, 'modelChange');
       this.resourceName = options.resourceName;
       this.bind('change', this.modelChange);
       return ResourceModel.__super__.initialize.call(this, options);
     };
-
     ResourceModel.prototype.modelChange = function() {
-      var args, fieldData, fieldName, _ref, _results,
-        _this = this;
+      var args, fieldData, fieldName, _ref, _results;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       if (this.hasChanged("schema")) {
         this.url = this.get('schema');
         this.fetch();
         this.url = this.get("list_endpoint") + "example/";
         this.fetch({
-          error: function() {
-            _this.set({
+          error: __bind(function() {
+            this.set({
               POST: false
             });
-            return _this.set({
+            return this.set({
               GET: false
             });
-          }
+          }, this)
         });
       }
       this.fields = [];
@@ -153,30 +149,23 @@
       }
       return _results;
     };
-
     ResourceModel.prototype.loaded = function() {
       return this.toJSON()['fields'] !== void 0;
     };
-
     return ResourceModel;
-
-  })(Backbone.Model);
-
-  ResourceView = (function(_super) {
-
-    __extends(ResourceView, _super);
-
+  })();
+  ResourceView = (function() {
+    __extends(ResourceView, Backbone.View);
     function ResourceView() {
       ResourceView.__super__.constructor.apply(this, arguments);
     }
-
+    ResourceView.prototype.el = "#resource";
     ResourceView.prototype.initialize = function(options) {
       _.bindAll(this, 'render');
       this.model || (this.model = new ResourceModel());
       this.model.bind('change', this.render);
       return this.template = _.template($("#resource_template").html());
     };
-
     ResourceView.prototype.formatExampleData = function(method, data) {
       var METHOD, allowed_methods, method_has_data, method_is_allowed;
       METHOD = method.toUpperCase();
@@ -190,74 +179,48 @@
         return data[METHOD] = "// not allowed";
       }
     };
-
-    ResourceView.prototype.highlightIfAllowed = function(data, action, method) {
-      var allowed_methods, selector;
-      selector = "." + action + "_methods ." + method + "_method";
-      allowed_methods = data["allowed_" + action + "_http_methods"];
-      return $(this.el).find(selector).toggleClass('allowed', __indexOf.call(allowed_methods, method) >= 0);
-    };
-
     ResourceView.prototype.render = function() {
-      var action, data, field, fieldView, jqFieldsList, method, _i, _j, _k, _len, _len2, _len3, _ref, _ref2, _ref3;
+      var data, field, fieldView, jqFieldsList, _i, _len, _ref;
       $(this.el).empty();
-      if (!this.model || !this.model.loaded()) return this;
+      if (!this.model || !this.model.loaded()) {
+        return this;
+      }
       data = this.model.toJSON();
       data.resource_name = this.model.resourceName;
       this.formatExampleData('POST', data);
       this.formatExampleData('GET', data);
       $(this.el).html(this.template(data));
-      jqFieldsList = $(this.el).find('ul.fields_list');
-      _ref = ['list', 'detail'];
+      jqFieldsList = $(this.el).find('.fields_list');
+      _ref = this.model.fields;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        action = _ref[_i];
-        _ref2 = ['get', 'post', 'delete', 'put', 'patch'];
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          method = _ref2[_j];
-          this.highlightIfAllowed(data, action, method);
-        }
-      }
-      _ref3 = this.model.fields;
-      for (_k = 0, _len3 = _ref3.length; _k < _len3; _k++) {
-        field = _ref3[_k];
+        field = _ref[_i];
         fieldView = new ResourceFieldView({
           model: field
         });
         fieldView.render();
-        jqFieldsList.append(fieldView.el);
+        jqFieldsList.append($(fieldView.el).html());
       }
       SyntaxHighlighter.highlight();
       return this;
     };
-
     return ResourceView;
-
-  })(Backbone.View);
-
-  ResourceList = (function(_super) {
-
-    __extends(ResourceList, _super);
-
+  })();
+  ResourceList = (function() {
+    __extends(ResourceList, Backbone.Model);
     function ResourceList() {
       ResourceList.__super__.constructor.apply(this, arguments);
     }
-
     ResourceList.prototype.url = function() {
       return window.api_url;
     };
-
     return ResourceList;
-
-  })(Backbone.Model);
-
-  ResourceListView = (function(_super) {
-
-    __extends(ResourceListView, _super);
-
+  })();
+  ResourceListView = (function() {
+    __extends(ResourceListView, Backbone.View);
     function ResourceListView() {
       ResourceListView.__super__.constructor.apply(this, arguments);
     }
-
+    ResourceListView.prototype.el = "#resource_list";
     ResourceListView.prototype.initialize = function() {
       _.bindAll(this, 'render');
       this.model.bind('change', this.render);
@@ -265,38 +228,31 @@
       this.currentModel = false;
       return this.currentModelView = new ResourceView();
     };
-
     ResourceListView.prototype.render = function() {
-      var jqBtn, resourceName, resourceProps, tmpl_data, _fn, _ref,
-        _this = this;
+      var jqBtn, resourceName, resourceProps, tmpl_data, _fn, _ref;
       $(this.el).empty();
       _ref = this.model.toJSON();
-      _fn = function(resourceProps) {
-        return jqBtn.click(function() {
-          return _this.currentModelView.model.set(resourceProps);
-        });
-      };
+      _fn = __bind(function(resourceName, resourceProps) {
+        return jqBtn.click(__bind(function() {
+          this.currentModelView.model.set(resourceProps);
+          return this.currentModelView.model.resourceName = resourceName;
+        }, this));
+      }, this);
       for (resourceName in _ref) {
         resourceProps = _ref[resourceName];
         tmpl_data = {
           resource_name: resourceName
         };
         jqBtn = $(this.resTemplate(tmpl_data));
-        _fn(resourceProps);
+        _fn(resourceName, resourceProps);
         $(this.el).append(jqBtn);
       }
-      this.currentModelView.render();
-      $(this.el).append(this.currentModelView.el);
-      return $('#resource_list').empty().append(this.el);
+      return this.currentModelView.render();
     };
-
     return ResourceListView;
-
-  })(Backbone.View);
-
+  })();
   $(document).ready(function() {
     var resources, resourcesView;
-    console.log("document ready");
     resources = new ResourceList();
     resourcesView = new ResourceListView({
       model: resources
@@ -304,5 +260,4 @@
     resources.fetch();
     return window.resourcesView = resourcesView;
   });
-
 }).call(this);

@@ -235,7 +235,7 @@ api_name = '{{api_name}}' # OR WHATEVER YOUR API'S NAME IS
 
 urlpatterns = patterns('',
         ...
-        (r'^tastytools', include('tastytools.urls'), {'api_name': api_name}),
+        (r'^tastytools/', include('tastytools.urls'), {'api_name': api_name}),
 )
     </pre>
 
