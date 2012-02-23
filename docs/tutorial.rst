@@ -72,7 +72,7 @@ Here is the code we'll be using (taken from the tastypie quickstart and tutorial
             queryset = Entry.objects.all()
             resource_name = 'entry'
 
-You can download this project by cloning git@github.com:thagat/django-tastytools.git
+You can download this project by cloning git@github.com:thagat/django_tastyblog.git
 
 Installation
 ============
