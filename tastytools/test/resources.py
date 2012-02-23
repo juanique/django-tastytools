@@ -146,6 +146,22 @@ class ResourceTestData(object):
         location = self.resource.get_resource_uri(bundle)
         return location, bundle.obj
 
+    def save_test_obj(self, model):
+        if self.db is not None:
+            databases = [self.db]
+        else:
+            databases = ['tastytools', 'test', '']
+
+        for db in databases:
+            try:
+                model.save(using=db)
+            except ConnectionDoesNotExist:
+                continue
+
+        if model.pk is None:
+            raise ConnectionDoesNotExist("Tried: %s" % ', '.join(databases))
+            
+
     def create_test_model(self, data=False, force=False, id=None, *args,
             **kwargs):
         '''Creates a test model (or object asociated with the resource and
@@ -183,16 +199,7 @@ class ResourceTestData(object):
         model = model_class(**valid_data)
 
         try:
-            if self.db is not None:
-                databases = [self.db]
-            else:
-                databases = ['tastytools', 'test', '']
-
-            for db in databases:
-                try:
-                    model.save(using=db)
-                except ConnectionDoesNotExist:
-                    continue
+            self.save_test_obj(model)
         except IntegrityError as e:
             if id is not None:
                 model = model_class.objects.get(**valid_data)
