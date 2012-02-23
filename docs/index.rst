@@ -37,7 +37,7 @@ Assuming you have a tastypie api and have already read the `tastypie docs`_:
 
     urlpatterns = patterns('',
       # ...more URLconf bits here...
-      (r'^api/', include(v1_api.urls)),
+      (r'^api/', include(api.urls)),
       # Then add:
       (r'^tastytools/', include('tastytools.urls'), {'api_name': api.api_name}),
     )
