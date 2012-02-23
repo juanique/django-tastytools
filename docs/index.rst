@@ -21,7 +21,7 @@ Quick Start
 Assuming you have a tastypie api and have already read the `tastypie docs`_:
 
 1. Add ``tastytools`` to ``INSTALLED_APPS``.
-2. Create an file in ``<my_app>/api/tools.py``, and place the following in it::
+2. Create an file in ``<my_app>/api/tools.py``, and move the tastypi api definition from the urls.py file to it::
 
     from tastytools.api import Api
     from <my_app>.api.resources import MyModelResource
@@ -31,19 +31,15 @@ Assuming you have a tastypie api and have already read the `tastypie docs`_:
     api.register(MyModelResource)
     api.register(resources=[AnotherResource, YetAnotherResource])
 
-3. In your root URLconf, add the following code (around where the tastypie code might be)::
+3. Then import the api to your urls root file::
 
-    from tastypie.api import Api
-    from my_app.api.resources import MyModelResource
-
-    api_name = 'v1'
-    v1_api = Api(api_name=api_name)
-    v1_api.register(MyModelResource())
+    from my_app.api.tools import api
 
     urlpatterns = patterns('',
       # ...more URLconf bits here...
+      (r'^api/', include(v1_api.urls)),
       # Then add:
-      (r'^tastytools/', include('tastytools.urls'), {'api_name': api_name}),
+      (r'^tastytools/', include('tastytools.urls'), {'api_name': api.api_name}),
     )
 
 4. got to http://localhost:8000/tastytools/v1/.
