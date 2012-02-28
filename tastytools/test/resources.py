@@ -1,4 +1,4 @@
-from django.db.models.fields.related import ManyToManyField
+from django.db.models.fields.related import ManyToManyField, ForeignKey
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
 from django.db import IntegrityError
 from mockups import Mockup
@@ -77,6 +77,7 @@ class TestData(object):
         elif constant is not None:
             value = constant
         else:
+            print name
             raise Exception("Expected resource or constant")
 
         self.data[name] = value
@@ -218,14 +219,23 @@ class ResourceTestData(object):
 
         '''
         model_class = self.resource._meta.object_class
+        resource_fields = self.resource.fields
+
         data = TestData(self.api, force, related, id=id)
-        mockup = Mockup(model_class, generate_fk=True, follow_fk=False)
+        mockup = Mockup(model_class, generate_fk=True, follow_fk=False,
+                follow_m2m={'ALL': (0,0)})
         instance = mockup.create_one(commit=False)
         fields = instance._meta.fields
         for field in fields:
-            value = instance.__getattribute__(field.name)
-            if value is not None:
-                data.set(field.name, value)
+            if isinstance(field, ForeignKey):
+                if field.name in resource_fields:
+                    resource_field = resource_fields[field.name]
+                    data.set(field.name,
+                            resource=resource_field.to._meta.resource_name)
+            else:
+                value = instance.__getattribute__(field.name)
+                if value is not None:
+                    data.set(field.name, value)
 
         return self.get_data(data)
 
