@@ -5,7 +5,7 @@ Getting Started with TastyTools
 
 For example purposes, we'll be adding tools to the simple blog application that Tasytypie has in it's own tutorial.
 
-Here is the code we'll be using (taken from the tastypie quickstart and tutorial with a few minor changes).
+Here is the code we'll be using (taken from the `tastypie quickstart`_ and `tastypie tutorial`_  with a few minor changes).
 
 ``myapp/models.py``::
 
@@ -72,6 +72,8 @@ Here is the code we'll be using (taken from the tastypie quickstart and tutorial
             queryset = Entry.objects.all()
             resource_name = 'entry'
 
+You can download this project by cloning git@github.com:thagat/django_tastyblog.git
+
 Installation
 ============
 
@@ -95,36 +97,35 @@ For our api to be easily consumable by users, we need documentation.
 Tastytools generates automatic documentation, so your clients always have 
 the latest api docs.
 For our simple application, we'll create a file: ``myapp/api/tools.py`` (in 
-the api folder created within your app in the `tastypie quickstart`_)
-We'll be using the EntryResource and UserResource from the `tastypie tutorial`_::
+the api folder created within your app in the `tastypie quickstart`_).
+
+First thing we need to do is move much of the tastypie code form the urls.py
+file to the new tools.py file::
 
     # myapp/api/tools.py
     from tastytools.api import Api
-    from trips.api.resources import EntrytResource, UserResource
+    from myapp.api.resources import EntryResource, UserResource
 
-    api = Api()
-    api.register(EntrytResource)
-    api.register(UsertResource)
+    v1_api = Api(api_name='v1')
+    v1_api.register(EntryResource())
+    v1_api.register(UserResource())
 
 
-Api is the center piece in our tools, and what we just did, was to register
-our resources into the api object. To see the generated documentation of
-our api we need to add the tastytools urls to our ``urls.py``::
+Notice that our Api object does not import form tastipie anymore, we'll be
+using from now on the tastytools Api class, that inherits from the tastypie Api class.
+
+Our urls.py file now needs to import the api object to keep working, and we'll
+add a new line to generate our documentation::
 
     # urls.py
-    from tastypie.api import Api
-    from myapp.api import EntryResource, UserResource
-
-    api_name = 'v1'
-    v1_api = Api(api_name=api_name)
-    v1_api.register(UserResource())
-    v1_api.register(EntryResource())
+    # ...
+    from myapp.api.tools import v1_api
 
     urlpatterns = patterns('',
         # ...
         (r'^api/', include(v1_api.urls)),
         # Then add:
-        (r'^tastytools/', include('tastytools.urls'), {'api_name': api_name}),
+        (r'^tastytools/', include('tastytools.urls'), {'api_name': v1_api.api_name}),
     )
 
 Now you can go check your auto generated documentation at /tastytools/doc/
@@ -133,19 +134,16 @@ Neat right? it's now easy to navigate through your api resources.
 Generating Example Data for your Tastypie API
 =============================================
 
-Every great documentation has examples, so tastytools helps you with this by 
-generating semi-random data:
-The first thing we need to do is implement a Test Data class, Which generates
-data four our tests::
+Every great documentation has examples, so tastytools helps you with this by
+generating example data:
+Implement a Test Data class, it's the one in charge of creating data for our tests::
 
-    # myapp/api/resources.py
+    # myapp/api/tools.py
     from tastytools.test.resources import ResourceTestData
 
 
     class EntryTestData(ResourceTestData):
-
-        def __init__(self, api):
-            ResourceTestData.__init__(self, api, 'entry')
+        resoruce = "entry"
 
         def get_data(self, data):
             data.set('user', resource='user')
@@ -155,12 +153,19 @@ data four our tests::
             data.set('body', 'Lorem ipsum ad his scripta blandit partiendo...')
             return data
 
-Then add the generated resource to your Resource Meta class::
 
-    class EntryResource(ModelResource):
-        class Meta:
-            ...
-            example_class = EntryTestData
+    class UserTestData(ResourceTestData):
+        resource = "user"
+
+        def get_data(self, data):
+        data.set('username', 'foo')
+        data.set('email', 'bar@foo.com')
+        return data
+
+
+Then register our test data to our api::
+
+    v1_api.register_testdata(EntryTestData)
 
 
 Generating Tests for your Tastypie API
@@ -172,18 +177,18 @@ readability of your api::
 
     #myapp/api/tests.py
     from tastytools.test.definitions import resources, fields
-    from api.application import api
+    from api.tools import v1_api
 
-    ResourceTests = resources.generate(api)
-    ResourceFieldTests = fields.generate(api)
+    ResourceTests = resources.generate(v1_api)
+    ResourceFieldTests = fields.generate(v1_api)
 
 Remember to add this test.py file to the set of tests your application tests 
-by importing it to your tests.py file or tests/__init__.py file
+by importing it to your tests.py file or your tests/__init__.py file if you
+have your tests in a folder
 
 .. note::
 
-    For the tests to work you need to specify the example_class field in the
-    Meta class of your resource.
+    For the tests to work you need to register TestData classes to the api object
 
 Now you have a lot of new tests for your api, which you can run with the
 ./manage.py tests myapp command. Fix them and your api will gain more than a 

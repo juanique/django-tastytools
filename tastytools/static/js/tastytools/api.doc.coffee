@@ -90,6 +90,7 @@ class ResourceModel extends Backbone.Model
     return  @.toJSON()['fields'] isnt undefined
 
 class ResourceView extends Backbone.View
+  el: "#resource"
 
   initialize : (options) ->
     _.bindAll(@, 'render')
@@ -111,10 +112,10 @@ class ResourceView extends Backbone.View
     else
       data[METHOD] = "// not allowed"
 
-  highlightIfAllowed : (data, action, method) ->
-    selector = ".#{action}_methods .#{method}_method"
-    allowed_methods = data["allowed_#{action}_http_methods"]
-    $(@el).find(selector).toggleClass('allowed', method in allowed_methods)
+  #highlightIfAllowed : (data, action, method) ->
+  #  selector = ".#{action}_methods .#{method}_method"
+  #  allowed_methods = data["allowed_#{action}_http_methods"]
+  #  $(@el).find(selector).toggleClass('allowed', method in allowed_methods)
 
   render : ->
     $(@el).empty()
@@ -128,16 +129,12 @@ class ResourceView extends Backbone.View
     @formatExampleData('GET', data)
 
     $(@el).html(@template(data))
-    jqFieldsList = $(@el).find('ul.fields_list')
-
-    for action in ['list','detail']
-      for method in ['get','post','delete','put','patch']
-        @highlightIfAllowed(data, action, method)
+    jqFieldsList = $(@el).find('.fields_list')
 
     for field in @model.fields
       fieldView = new ResourceFieldView(model: field)
       fieldView.render()
-      jqFieldsList.append(fieldView.el)
+      jqFieldsList.append($(fieldView.el).html())
 
     SyntaxHighlighter.highlight()
     return this
@@ -149,6 +146,8 @@ class ResourceList extends Backbone.Model
 
 
 class ResourceListView extends Backbone.View
+  el: "#resource_list"
+
   initialize: ->
     _.bindAll(@,'render')
     @model.bind('change',@render)
@@ -161,18 +160,15 @@ class ResourceListView extends Backbone.View
     for resourceName, resourceProps of @model.toJSON()
       tmpl_data = resource_name : resourceName
       jqBtn = $(@resTemplate(tmpl_data))
-      do (resourceProps) =>
+      do (resourceName, resourceProps) =>
         jqBtn.click =>
           @currentModelView.model.set resourceProps
+          @currentModelView.model.resourceName = resourceName
       $(@el).append(jqBtn)
 
     @currentModelView.render()
-    $(@el).append(@currentModelView.el)
-    $('#resource_list').empty().append(@el)
 
 $(document).ready ->
-  console.log "document ready"
-
   resources = new ResourceList()
   resourcesView = new ResourceListView(model:resources)
   resources.fetch()
