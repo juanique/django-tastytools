@@ -1,7 +1,9 @@
 from django.db.models.fields.related import ManyToManyField
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
-from django.db import IntegrityError
+from django.db import IntegrityError, DatabaseError
 from django.db.utils import ConnectionDoesNotExist
+from django.core.management import call_command
+
 
 
 class Related(object):
@@ -193,6 +195,12 @@ class ResourceTestData(object):
                     model.save(using=db)
                 except ConnectionDoesNotExist:
                     continue
+                except DatabaseError:
+                    try:
+                        call_command('syncdb', database=db, interactive=False)
+                        model.save(using=db)
+                    except ConnectionDoesNotExist:
+                        continue
         except IntegrityError as e:
             if id is not None:
                 model = model_class.objects.get(**valid_data)
