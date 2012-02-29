@@ -1,4 +1,4 @@
-from django.db.models.fields.related import ManyToManyField
+from django.db.models.fields.related import ManyToManyField, ManyRelatedObjectsDescriptor
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
 from django.db import IntegrityError
 from django.db.utils import ConnectionDoesNotExist
@@ -188,6 +188,7 @@ class ResourceTestData(object):
                     field_obj = getattr(model_class, field)
                     is_m2m = isinstance(field_obj,
                         ForeignRelatedObjectsDescriptor)
+                    is_m2m = is_m2m or isinstance(field_obj, ManyRelatedObjectsDescriptor)
 
                 if is_m2m:
                     m2m[field] = data[field]
@@ -210,6 +211,8 @@ class ResourceTestData(object):
         #print model
 
         for m2m_field, values in m2m.items():
+            if type(values) is not list:
+                values = [values]
             for value in values:
                 getattr(model, m2m_field).add(value)
 
