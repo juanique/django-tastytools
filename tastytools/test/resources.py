@@ -5,6 +5,7 @@ from django.db import IntegrityError, DatabaseError
 from django.db.utils import ConnectionDoesNotExist
 from django.core.management import call_command
 
+import sys
 
 
 class Related(object):
@@ -188,7 +189,10 @@ class ResourceTestData(object):
         model = model_class(**valid_data)
 
         try:
-            if self.db is not None:
+            # if we are running tests, use the default database
+            if 'test' in sys.argv:
+                databases = ['']
+            elif self.db is not None:
                 databases = [self.db]
             else:
                 databases = ['tastytools', 'test', '']
