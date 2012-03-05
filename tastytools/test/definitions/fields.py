@@ -125,7 +125,7 @@ def generate(api, setUp=None):
         def multi_max_length_post(self, resource_name, resource, field_name,
                 field):
 
-            max_length = field.max_length
+            max_length = getattr(field, "max_length", None)
             if max_length is not None and resource.can_create():
                 request_data = resource.get_test_post_data()
 
