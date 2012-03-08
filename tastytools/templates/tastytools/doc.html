@@ -20,10 +20,12 @@
 
     </style>
 
-    <script type="text/template" id="resources_btn_template">
-        <li><a data-toggle="pill" href="#" class="btn_<%=resource_name%>" >
-                <%=resource_name%>
-        </a></li>
+    <script type="text/template" id="resource_list_template">
+        <% collection.forEach( function(resource, index) { %>
+            <li><a  data-toggle="pill" href="#" 
+                    class="button" data-index="<%=index%>" ><%=resource.get("name")%>
+            </a></li>
+        <% }) %>
     </script>
 
     <script type="text/template" id="resource_field_template">
@@ -34,7 +36,7 @@
                     <em class="type"><%= type %></em>
                 </div>
                 <div class="span3">
-                    <em class="default <%= has_default? '':'default-none' %>"><%= default_value %></em>
+                    <em class="default <%= has_default? '':'default-none' %>"><%= default_value %>&nbsp;</em>
                 </div>
                 <div class="span2">
                 <% _.each(
@@ -46,14 +48,22 @@
                 <% }) %>
                 </div>
             </dt>
-            <dd class="offset2 span6"><%= help_text %></dd>
+            <dd class="offset2 span6">
+                <%= help_text %>
+                <% if(filtering && filtering.length>0) { %>
+                    <br/><strong>Filtering</strong>&nbsp;
+                    <% _.forEach(filtering, function(filterType) { %>
+                        <span class="label label-info"><%=filterType%></span>
+                    <% }) %>
+                <% } %>
+            </dd>
         </div>
     </script>
 
     <script type="text/template" id="resource_template">
         <%  var methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']; 
         %>
-        <h2 id='anchor_<%= resource_name %>'><%= resource_name %></h2>
+        <h2 id='anchor_<%=name%>'><%=name%></h2>
         <div class="well row">
             <table class='resources_table span8'>
                 <tr>
@@ -63,14 +73,6 @@
                 <tr>
                     <th>Schema URI</th>
                     <td><%= schema %></td>
-                </tr>
-                <tr>
-                    <th>Default Format</th>
-                    <td><%= default_format %></td>
-                </tr>
-                <tr>
-                    <th>Default Limit</th>
-                    <td><%= default_limit %></td>
                 </tr>
                 <% _.each( ['List', 'Detail'], function(operation) { %>
                     <tr>
@@ -90,23 +92,29 @@
                         </td>
                     </tr>
                 <% }) %>
+                <tr>
+                    <th>Default Format</th>
+                    <td><%= default_format %></td>
+                </tr>
+                <tr>
+                    <th>Default Limit</th>
+                    <td><%= default_limit %></td>
+                </tr>
             </table>
         </div>
 
         <h3>Fields</h3>
-        <ul class='fields_list row'></ul>
+        <ul class='field_list row'></ul>
 
             <h3 class="span8" >Example data</h3>
-            <% if(obj.POST){ %>
-                <h4>POST</h4>
-                <pre class="brush: js"><%= POST %></pre>
-            <% } %>
-            <% if(obj.GET){ %>
-                <h4>GET</h4>
-                <pre class="brush: js"><%= GET %></pre>
-            <% } %>
+            <div id="examples"></div>
         </div>
 
+    </script>
+
+    <script type="text/template" id="example_template">
+        <h4><%=method%></h4>
+        <pre class="brush: js"><%=example%></pre>
     </script>
 {% endblock %}
 

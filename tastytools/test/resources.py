@@ -1,3 +1,4 @@
+from django.db.models.fields.related import ManyRelatedObjectsDescriptor
 from django.db.models.fields.related import ManyToManyField, ForeignKey
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
 from mockups import Mockup
@@ -77,11 +78,8 @@ class TestData(object):
             else:
                 value = self.create_test_data(resource,
                     related=self.related, force=force, id=id)
-        elif constant is not None:
-            value = constant
         else:
-            print name
-            raise Exception("Expected resource or constant")
+            value = constant
 
         self.data[name] = value
 
@@ -151,6 +149,21 @@ class ResourceTestData(object):
         location = self.resource.get_resource_uri(bundle)
         return location, bundle.obj
 
+    def save_test_obj(self, model):
+        if self.db is not None:
+            databases = [self.db]
+        else:
+            databases = ['tastytools', 'test', '']
+
+        for db in databases:
+            try:
+                model.save(using=db)
+            except ConnectionDoesNotExist:
+                continue
+
+        if model.pk is None:
+            raise ConnectionDoesNotExist("Tried: %s" % ', '.join(databases))
+
     def create_test_model(self, data=False, force=False, id=None, *args,
             **kwargs):
         '''Creates a test model (or object asociated with the resource and
@@ -178,6 +191,8 @@ class ResourceTestData(object):
                     field_obj = getattr(model_class, field)
                     is_m2m = isinstance(field_obj,
                         ForeignRelatedObjectsDescriptor)
+                    is_m2m = is_m2m or isinstance(
+                            field_obj, ManyRelatedObjectsDescriptor)
 
                 if is_m2m:
                     m2m[field] = data[field]
@@ -218,6 +233,8 @@ class ResourceTestData(object):
         #print model
 
         for m2m_field, values in m2m.items():
+            if type(values) is not list:
+                values = [values]
             for value in values:
                 getattr(model, m2m_field).add(value)
 
@@ -235,7 +252,7 @@ class ResourceTestData(object):
 
         data = TestData(self.api, force, related, id=id)
         mockup = Mockup(model_class, generate_fk=True, follow_fk=False,
-                follow_m2m={'ALL': (0,0)})
+                follow_m2m={'ALL': (0, 0)})
         instance = mockup.create_one(commit=False)
         fields = instance._meta.fields
         for field in fields:

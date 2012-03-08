@@ -53,38 +53,36 @@ class ResourceFieldView extends Backbone.View
 
   render : ->
     data = @model.toJSON()
-    jqRendered = $(@template(data))
-
-    for flag in ['nullable','readonly','unique','blank']
-      selector = "span.flag_#{flag}"
-      jqRendered.find(selector).toggleClass('active_flag', data[flag])
-
-    $(@el).html jqRendered
+    $(@el).html $(@template(data))
     return this
 
 
+class SampleModel extends Backbone.Model
+
+  url: ()->
+      return @resource.get("list_endpoint")+"example/"
+
+
 class ResourceModel extends Backbone.Model
-  initialize : (options) ->
-    _.bindAll(@,'modelChange')
-    @resourceName = options.resourceName
-    @bind('change',@modelChange)
+
+  initialize : (options) =>
+    @sample = new SampleModel()
+    @sample.resource = this
+    @bind('change', @refreshFieldList)
     super(options)
 
-  modelChange : (args...) ->
-    if @hasChanged("schema")
-      @url = @get('schema')
-      @fetch()
-      @url = @get("list_endpoint")+"example/"
-      @fetch
-        error : =>
-          @set(POST : false)
-          @set(GET : false)
-
+  refreshFieldList: ()->
     @fields = []
-    for fieldName, fieldData of @toJSON().fields
+    resourceFiltering = @get("filtering") or {}
+    for fieldName, fieldData of @get("fields")
       fieldData.default_value = fieldData.default
       fieldData.name = fieldName
+      fieldData.filtering = resourceFiltering[fieldName] or []
+      fieldData.filtering = [fieldData.filtering] if typeof fieldData.filtering == "string"
       @fields.push new ResourceFieldModel(fieldData)
+
+  url: ()->
+      @get("schema")
 
   loaded : ->
     return  @.toJSON()['fields'] isnt undefined
@@ -98,78 +96,81 @@ class ResourceView extends Backbone.View
     @model.bind('change',@render)
     @template = _.template($("#resource_template").html())
 
-
-  formatExampleData : (method, data) ->
-    METHOD = method.toUpperCase()
-    method = method.toLowerCase()
-
-    allowed_methods = data.allowed_detail_http_methods.concat data.allowed_list_http_methods
-    method_is_allowed = method in allowed_methods
-    method_has_data = data[METHOD]
-
-    if method_is_allowed and method_has_data
-      data[METHOD] = dumpObjectIndented data[METHOD]
-    else
-      data[METHOD] = "// not allowed"
-
-  #highlightIfAllowed : (data, action, method) ->
-  #  selector = ".#{action}_methods .#{method}_method"
-  #  allowed_methods = data["allowed_#{action}_http_methods"]
-  #  $(@el).find(selector).toggleClass('allowed', method in allowed_methods)
-
   render : ->
-    $(@el).empty()
     if not @model or not @model.loaded()
       return this
 
-    data = @model.toJSON()
-    data.resource_name = @model.resourceName
+    $(@el).empty().html(@template(@model.toJSON()))
+    fieldCompare = (aObj,bObj)->
+        a = aObj.get("name")
+        b = bObj.get("name")
+        return -1 if a < b
+        return  0 if a == b
+        return  1 if a > b
 
-    @formatExampleData('POST', data)
-    @formatExampleData('GET', data)
-
-    $(@el).html(@template(data))
-    jqFieldsList = $(@el).find('.fields_list')
-
-    for field in @model.fields
+    for field in @model.fields.sort fieldCompare
       fieldView = new ResourceFieldView(model: field)
       fieldView.render()
-      jqFieldsList.append($(fieldView.el).html())
+      @$(".field_list").append($(fieldView.el).html())
 
-    SyntaxHighlighter.highlight()
+    @model.sample?.fetch
+        success: @renderSample
+        error: ()=>
+            @model.sample.set {GET: "", POST: ""}
+            @renderSample
+
     return this
 
+  renderSample: ()=>
+    @$("#examples").empty()
+    template = _.template($("#example_template").html())
+    for method in ['GET', 'POST']
+        example = @formatExampleData(method, @model.sample.get(method))
+        @$('#examples').append template( {method: method, example: example} )
+    SyntaxHighlighter.highlight()
 
-class ResourceList extends Backbone.Model
+
+  formatExampleData : (method, data) ->
+    method = method.toLowerCase()
+    method_is_allowed   = method in @model.get("allowed_detail_http_methods")
+    method_is_allowed or= method in @model.get("allowed_list_http_methods")
+
+    if method_is_allowed and data?
+      return dumpObjectIndented data
+    else
+      return "// not allowed"
+
+
+class ResourceList extends Backbone.Collection
   url : ()->
       return window.api_url
 
+  parse: (response)->
+      ( new ResourceModel( _.extend(props, name: name) ) for name, props of response )
+
 
 class ResourceListView extends Backbone.View
-  el: "#resource_list"
+  el:   "#resource_list"
+  events:
+      "click .button": "showResource"
 
   initialize: ->
     _.bindAll(@,'render')
-    @model.bind('change',@render)
-    @resTemplate = _.template($("#resources_btn_template").html())
-    @currentModel = false
-    @currentModelView = new ResourceView()
+    @collection.bind('reset',@render)
+    @template = _.template($("#resource_list_template").html())
+    @resourceView = new ResourceView()
 
   render : ->
-    $(@el).empty()
-    for resourceName, resourceProps of @model.toJSON()
-      tmpl_data = resource_name : resourceName
-      jqBtn = $(@resTemplate(tmpl_data))
-      do (resourceName, resourceProps) =>
-        jqBtn.click =>
-          @currentModelView.model.set resourceProps
-          @currentModelView.model.resourceName = resourceName
-      $(@el).append(jqBtn)
+    $(@el).empty().append @template( collection: @collection )
+    return @
 
-    @currentModelView.render()
+  showResource: (event)->
+      model_index = $(event.currentTarget).attr("data-index")
+      @resourceView.model = @collection.at(model_index)
+      @resourceView.model.fetch success: ()=> @resourceView.render()
+
 
 $(document).ready ->
-  resources = new ResourceList()
-  resourcesView = new ResourceListView(model:resources)
-  resources.fetch()
+  resourcesView = new ResourceListView collection: new ResourceList()
+  resourcesView.collection.fetch()
   window.resourcesView = resourcesView

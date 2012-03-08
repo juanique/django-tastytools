@@ -4,8 +4,13 @@ from tastypie import fields
 class TastyToolsField(object):
     def __init__(self, parent_class, *args, **kwargs):
         self.final = kwargs.get("final", False)
+        self.max_length = kwargs.get("max_length", None)
         try:
             del kwargs['final']
+        except:
+            pass
+        try:
+            del kwargs['max_length']
         except:
             pass
         parent_class.__init__(self, *args, **kwargs)

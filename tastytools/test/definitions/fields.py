@@ -4,6 +4,11 @@ from django.test import TestCase
 from tastytools.test.client import Client, MultiTestCase, create_multi_meta
 from datetime import datetime
 from helpers import prepare_test_post_data
+import random
+
+
+class FieldNotSupportedException(Exception):
+    pass
 
 
 def generate(api, setUp=None):
@@ -20,6 +25,7 @@ def generate(api, setUp=None):
         of every Resource
 
         """
+
         @staticmethod
         def generate_field_test_data(field):
             field_classname = field.__class__.__name__
@@ -36,7 +42,7 @@ def generate(api, setUp=None):
             elif field_classname == "DateField":
                 return datetime.now()
             else:
-                raise Exception("Unrecognized classname: %s" % field_classname)
+                raise FieldNotSupportedException(field_classname)
 
             return bad_value
 
@@ -59,16 +65,16 @@ def generate(api, setUp=None):
                 response = self.client.post(resource.get_resource_list_uri(),
                     post_data)
 
-                for code in [404, 500]:
-                    msg = "%s returns a %s response when issuing a POST with\
-                            missing %s"
-                    msg %= (resource_name, code, field_name)
+                for code in [401, 404, 500]:
+                    msg = "%s returns a %s response when issuing a POST with" \
+                            " missing %s - %s"
+                    msg %= (resource_name, code, field_name, response.content)
                     self.assertNotEqual(code, response.status_code, msg)
                 header, content_type = response._headers['content-type']
 
                 if len(response.content) > 0:
-                    msg = "Bad content type when POSTing a %s with missing %s:\
-                            %s (%s)=> %s"
+                    msg = "Bad content type when POSTing a %s with missing %s:" \
+                          "%s (%s)=> %s"
                     msg %= (resource_name, field_name, content_type,
                             response.status_code, response.content)
                     self.assertTrue(
@@ -93,7 +99,10 @@ def generate(api, setUp=None):
             """
             if field.readonly and resource.can_create():
                 post_data = resource.get_test_post_data()
-                bad_value = UnderResourceFields.generate_field_test_data(field)
+                try:
+                    bad_value = UnderResourceFields.generate_field_test_data(field)
+                except FieldNotSupportedException:
+                    return
                 post_data[field_name] = bad_value
                 post_response = self.client.post(
                         resource.get_resource_list_uri(),
@@ -111,6 +120,35 @@ def generate(api, setUp=None):
                     msg %= (resource_name, field_name)
                     self.assertNotEqual(get_response.get(field_name, ''),
                        bad_value, msg)
+
+        @staticmethod
+        def multi_max_length_post(self, resource_name, resource, field_name,
+                field):
+
+            max_length = getattr(field, "max_length", None)
+            if max_length is not None and resource.can_create():
+                request_data = resource.get_test_post_data()
+
+                request_data[field_name] = \
+                UnderResourceFields.generate_string_by_length(
+                        field.max_length + 1)
+                msg = "%s.%s max length exceeded, and did not return"\
+                        " a bad request error"
+                msg %= (resource_name, field_name)
+                post_response = self.client.post(
+                        resource.get_resource_list_uri(),
+                        data=request_data, parse='json')
+
+                self.assertEqual(post_response.status_code, 400, msg)
+                data = post_response.data['errors']
+                has_error = False
+                for error in data:
+                    if error['name'] == "MaxLengthExceeded":
+                        has_error = True
+                if has_error is False:
+                    msg = '%s.%s max length exceeded, but MaxLengthExceeded error is not being reported'
+                    msg %= (resource_name, field_name)
+                    self.assertTrue(False, msg)
 
         @staticmethod
         def multi_readonly_patch(self, resource_name, resource, field_name,
@@ -157,6 +195,19 @@ def generate(api, setUp=None):
         @staticmethod
         def generate_test_name(resource_name, resource, field_name, field):
             return "_".join([resource_name, field_name])
+
+        @staticmethod
+        def generate_string_by_length(length):
+
+            string = ""
+            for i in range(length):
+                rand_num = random.randint(0, 35)
+                if rand_num < 10:
+                    char = str(rand_num)
+                else:
+                    char = chr(55 + rand_num)
+                string += char
+            return string
 
         @staticmethod
         def setUp(self, *args, **kwargs):
