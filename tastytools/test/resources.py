@@ -1,7 +1,10 @@
 from django.db.models.fields.related import ManyToManyField, ManyRelatedObjectsDescriptor
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
-from django.db import IntegrityError
+from django.db import IntegrityError, DatabaseError
 from django.db.utils import ConnectionDoesNotExist
+from django.core.management import call_command
+
+import sys
 
 
 class Related(object):
@@ -73,10 +76,11 @@ class TestData(object):
             else:
                 value = self.create_test_data(resource,
                     related=self.related, force=force, id=id)
-        elif constant is not None:
-            value = constant
+        #elif constant is not None:
         else:
-            raise Exception("Expected resource or constant")
+            value = constant
+        #else:
+        #    raise Exception("Expected resource or constant")
 
         self.data[name] = value
 
@@ -200,7 +204,25 @@ class ResourceTestData(object):
         model = model_class(**valid_data)
 
         try:
-            self.save_test_obj(model)
+            # if we are running tests, use the default database
+            if 'test' in sys.argv:
+                databases = ['']
+            elif self.db is not None:
+                databases = [self.db]
+            else:
+                databases = ['tastytools', 'test', '']
+
+            for db in databases:
+                try:
+                    model.save(using=db)
+                except ConnectionDoesNotExist:
+                    continue
+                except DatabaseError:
+                    try:
+                        call_command('syncdb', database=db, interactive=False)
+                        model.save(using=db)
+                    except ConnectionDoesNotExist:
+                        continue
         except IntegrityError as e:
             if id is not None:
                 model = model_class.objects.get(**valid_data)
