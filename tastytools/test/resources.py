@@ -73,10 +73,11 @@ class TestData(object):
             else:
                 value = self.create_test_data(resource,
                     related=self.related, force=force, id=id)
-        elif constant is not None:
-            value = constant
+        #elif constant is not None:
         else:
-            raise Exception("Expected resource or constant")
+            value = constant
+        #else:
+        #    raise Exception("Expected resource or constant")
 
         self.data[name] = value
 
