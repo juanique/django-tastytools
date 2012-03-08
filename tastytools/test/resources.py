@@ -219,7 +219,7 @@ class ResourceTestData(object):
                     continue
                 except DatabaseError:
                     try:
-                        call_command('syncdb', database=db, interactive=False)
+                        call_command('syncdb', migrate=True, database=db, interactive=False)
                         model.save(using=db)
                     except ConnectionDoesNotExist:
                         continue
