@@ -1,12 +1,35 @@
 from django.db.models.fields.related import ManyRelatedObjectsDescriptor
 from django.db.models.fields.related import ManyToManyField, ForeignKey
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
-from mockups import Mockup
 from django.db import IntegrityError, DatabaseError
 from django.db.utils import ConnectionDoesNotExist
 from django.core.management import call_command
+from django.db import models
 
+from tastytools.test import generators
 import sys
+
+FIELDCLASS_TO_GENERATOR = {
+    models.BooleanField: generators.BooleanGenerator,
+    models.DateField: generators.DateGenerator,
+    models.DateTimeField: generators.DateTimeGenerator,
+    models.EmailField: generators.EmailGenerator,
+    models.IntegerField: generators.IntegerGenerator,
+    models.FloatField: generators.FloatGenerator,
+    models.IPAddressField: generators.IPAddressGenerator,
+    models.NullBooleanField: generators.NullBooleanGenerator,
+    models.PositiveIntegerField: generators.PositiveIntegerGenerator,
+    models.PositiveSmallIntegerField: generators.PositiveSmallIntegerGenerator,
+    models.SlugField: generators.SlugGenerator,
+    models.SmallIntegerField: generators.SmallIntegerGenerator,
+    models.TextField: generators.LoremGenerator,
+    models.TimeField: generators.TimeGenerator,
+    models.URLField: generators.URLGenerator,
+    # field generators
+    models.CharField: generators.CharFieldGenerator,
+    models.DecimalField: generators.DecimalFieldGenerator,
+    models.FilePathField: generators.FilePathFieldGenerator,
+}
 
 
 class Related(object):
@@ -251,20 +274,26 @@ class ResourceTestData(object):
         resource_fields = self.resource.fields
 
         data = TestData(self.api, force, related, id=id)
-        mockup = Mockup(model_class, generate_fk=True, follow_fk=False,
-                follow_m2m={'ALL': (0, 0)})
-        instance = mockup.create_one(commit=False)
-        fields = instance._meta.fields
+
+        fields = model_class._meta.fields
+        print "model_class", model_class
         for field in fields:
+            print field.name
             if isinstance(field, ForeignKey):
                 if field.name in resource_fields:
                     resource_field = resource_fields[field.name]
                     data.set(field.name,
                             resource=resource_field.to._meta.resource_name)
             else:
-                value = instance.__getattribute__(field.name)
-                if value is not None:
-                    data.set(field.name, value)
+                if type(field) in FIELDCLASS_TO_GENERATOR:
+                    generator_class = FIELDCLASS_TO_GENERATOR[type(field)]
+                    if issubclass(generator_class, generators.FieldGenerator):
+                        generator = generator_class(field)
+                    elif issubclass(generator_class, generators.Generator):
+                        generator = generator_class()
+                    value = generator.get_value()
+                    if value is not None:
+                        data.set(field.name, value)
 
         return self.get_data(data)
 

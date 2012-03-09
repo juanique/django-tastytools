@@ -68,6 +68,8 @@ class ModelResource(TastyModelResource):
                 related_objs.append(related_bundle.obj)
 
             if not hasattr(related_mngr, 'add'):
+                print related_mngr
+                print field_name
                 func = "save_m2m_%s" % field_name
                 if not hasattr(self, func):
                     msg = "Missing save ManyToMany related %s function: %s."
