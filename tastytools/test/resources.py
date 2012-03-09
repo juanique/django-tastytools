@@ -187,23 +187,25 @@ class ResourceTestData(object):
         class_fields = model_class._meta.get_all_field_names()
         for field in class_fields:
             try:
-                valid_data[field] = data[field]
-
-                try:
-                    field_obj = model_class._meta.get_field(field)
-                    is_m2m = isinstance(field_obj, ManyToManyField)
-                except Exception:
-                    field_obj = getattr(model_class, field)
-                    is_m2m = isinstance(field_obj,
-                        ForeignRelatedObjectsDescriptor)
-                    is_m2m = is_m2m or isinstance(field_obj, ManyRelatedObjectsDescriptor)
-
-                if is_m2m:
-                    m2m[field] = data[field]
-                    del valid_data[field]
-
+                value = data[field]
             except KeyError:
-                pass
+                continue
+
+            valid_data[field] = value
+
+            try:
+                field_obj = model_class._meta.get_field(field)
+                is_m2m = isinstance(field_obj, ManyToManyField)
+            except Exception:
+                field_obj = getattr(model_class, field)
+                is_m2m = isinstance(field_obj,
+                    ForeignRelatedObjectsDescriptor)
+                is_m2m = is_m2m or isinstance(field_obj, ManyRelatedObjectsDescriptor)
+
+            if is_m2m:
+                m2m[field] = data[field]
+                del valid_data[field]
+
 
         model = model_class(**valid_data)
 
@@ -219,9 +221,11 @@ class ResourceTestData(object):
             for db in databases:
                 try:
                     model.save(using=db)
-                except ConnectionDoesNotExist:
+                except IntegrityError as e:
                     continue
-                except DatabaseError:
+                except ConnectionDoesNotExist as e:
+                    continue
+                except DatabaseError as e:
                     try:
                         call_command('syncdb', migrate=True, database=db, interactive=False)
                         model.save(using=db)
