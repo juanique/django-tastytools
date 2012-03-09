@@ -1,7 +1,10 @@
 from django.db.models.fields.related import ManyToManyField, ManyRelatedObjectsDescriptor
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
-from django.db import IntegrityError
+from django.db import IntegrityError, DatabaseError
 from django.db.utils import ConnectionDoesNotExist
+from django.core.management import call_command
+
+import sys
 
 
 class Related(object):
@@ -67,29 +70,34 @@ class TestData(object):
                 value = []
                 while count > 0:
                     res = self.create_test_data(resource,
-                        related=self.related, force=force, id=id)
+                        related=self.related, force=force, id=id, model=constant)
                     value.append(res)
                     count -= 1
             else:
                 value = self.create_test_data(resource,
-                    related=self.related, force=force, id=id)
-        elif constant is not None:
-            value = constant
+                    related=self.related, force=force, id=id, model=constant)
+        #elif constant is not None:
         else:
-            raise Exception("Expected resource or constant")
+            value = constant
+        #else:
+        #    raise Exception("Expected resource or constant")
 
         self.data[name] = value
 
         return value
 
     def create_test_data(self, resource_name, related=Related.Model,
-        force=False, id=None):
+        force=False, id=None, model=None):
         force = force or {}
 
         resource = self.api.resource(resource_name)
         #resource.start_test_session(self.test_session)
 
-        (uri, res) = resource.create_test_resource(force, id=id)
+        if model is not None:
+            uri = resource.get_resource_uri(model)
+            res = model
+        else:
+            (uri, res) = resource.create_test_resource(force, id=id)
 
         if related == Related.Uri:
             return uri
@@ -162,12 +170,29 @@ class ResourceTestData(object):
             raise ConnectionDoesNotExist("Tried: %s" % ', '.join(databases))
             
 
+    def get_model_cache(self):
+        if not hasattr(self.resource, "_models"):
+            self.resource._models = {}
+        return self.resource._models
+
+    def get_cached_model(self, id):
+        return self.get_model_cache().get(id, None)
+
+    def set_cached_model(self, id, model):
+        if id is not None:
+            self.get_model_cache()[id] = model
+
     def create_test_model(self, data=False, force=False, id=None, *args,
             **kwargs):
         '''Creates a test model (or object asociated with the resource and
         returns it
 
         '''
+        cached_model = self.get_cached_model(id)
+        if cached_model is not None:
+            cached_model.save()
+            return cached_model
+
         force = force or {}
 
         data = data or self.sample_data(related=Related.Model, force=force,
@@ -179,28 +204,50 @@ class ResourceTestData(object):
         class_fields = model_class._meta.get_all_field_names()
         for field in class_fields:
             try:
-                valid_data[field] = data[field]
-
-                try:
-                    field_obj = model_class._meta.get_field(field)
-                    is_m2m = isinstance(field_obj, ManyToManyField)
-                except Exception:
-                    field_obj = getattr(model_class, field)
-                    is_m2m = isinstance(field_obj,
-                        ForeignRelatedObjectsDescriptor)
-                    is_m2m = is_m2m or isinstance(field_obj, ManyRelatedObjectsDescriptor)
-
-                if is_m2m:
-                    m2m[field] = data[field]
-                    del valid_data[field]
-
+                value = data[field]
             except KeyError:
-                pass
+                continue
+
+            valid_data[field] = value
+
+            try:
+                field_obj = model_class._meta.get_field(field)
+                is_m2m = isinstance(field_obj, ManyToManyField)
+            except Exception:
+                field_obj = getattr(model_class, field)
+                is_m2m = isinstance(field_obj,
+                    ForeignRelatedObjectsDescriptor)
+                is_m2m = is_m2m or isinstance(field_obj, ManyRelatedObjectsDescriptor)
+
+            if is_m2m:
+                m2m[field] = data[field]
+                del valid_data[field]
+
 
         model = model_class(**valid_data)
 
         try:
-            self.save_test_obj(model)
+            # if we are running tests, use the default database
+            if 'test' in sys.argv:
+                databases = ['']
+            elif self.db is not None:
+                databases = [self.db]
+            else:
+                databases = ['tastytools', 'test', '']
+
+            for db in databases:
+                try:
+                    model.save(using=db)
+                except IntegrityError as e:
+                    continue
+                except ConnectionDoesNotExist as e:
+                    continue
+                except DatabaseError as e:
+                    try:
+                        call_command('syncdb', migrate=True, database=db, interactive=False)
+                        model.save(using=db)
+                    except ConnectionDoesNotExist:
+                        continue
         except IntegrityError as e:
             if id is not None:
                 model = model_class.objects.get(**valid_data)
@@ -217,6 +264,7 @@ class ResourceTestData(object):
                 getattr(model, m2m_field).add(value)
 
         data.set_related(model)
+        self.set_cached_model(id, model)
         return model
 
     #@property
@@ -225,7 +273,8 @@ class ResourceTestData(object):
         interacting with the resource
 
         '''
-        data = TestData(self.api, force, related, id=id)
+
+        data = TestData(self.api, force, related)
         return self.get_data(data)
 
     def get_data(self, data):
