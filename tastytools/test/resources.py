@@ -170,12 +170,29 @@ class ResourceTestData(object):
             raise ConnectionDoesNotExist("Tried: %s" % ', '.join(databases))
             
 
+    def get_model_cache(self):
+        if not hasattr(self.resource, "_models"):
+            self.resource._models = {}
+        return self.resource._models
+
+    def get_cached_model(self, id):
+        return self.get_model_cache().get(id, None)
+
+    def set_cached_model(self, id, model):
+        if id is not None:
+            self.get_model_cache()[id] = model
+
     def create_test_model(self, data=False, force=False, id=None, *args,
             **kwargs):
         '''Creates a test model (or object asociated with the resource and
         returns it
 
         '''
+        cached_model = self.get_cached_model(id)
+        if cached_model is not None:
+            cached_model.save()
+            return cached_model
+
         force = force or {}
 
         data = data or self.sample_data(related=Related.Model, force=force,
@@ -247,6 +264,7 @@ class ResourceTestData(object):
                 getattr(model, m2m_field).add(value)
 
         data.set_related(model)
+        self.set_cached_model(id, model)
         return model
 
     #@property
@@ -255,7 +273,8 @@ class ResourceTestData(object):
         interacting with the resource
 
         '''
-        data = TestData(self.api, force, related, id=id)
+
+        data = TestData(self.api, force, related)
         return self.get_data(data)
 
     def get_data(self, data):
