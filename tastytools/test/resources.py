@@ -70,12 +70,12 @@ class TestData(object):
                 value = []
                 while count > 0:
                     res = self.create_test_data(resource,
-                        related=self.related, force=force, id=id)
+                        related=self.related, force=force, id=id, model=constant)
                     value.append(res)
                     count -= 1
             else:
                 value = self.create_test_data(resource,
-                    related=self.related, force=force, id=id)
+                    related=self.related, force=force, id=id, model=constant)
         #elif constant is not None:
         else:
             value = constant
@@ -87,13 +87,17 @@ class TestData(object):
         return value
 
     def create_test_data(self, resource_name, related=Related.Model,
-        force=False, id=None):
+        force=False, id=None, model=None):
         force = force or {}
 
         resource = self.api.resource(resource_name)
         #resource.start_test_session(self.test_session)
 
-        (uri, res) = resource.create_test_resource(force, id=id)
+        if model is not None:
+            uri = resource.get_resource_uri(model)
+            res = model
+        else:
+            (uri, res) = resource.create_test_resource(force, id=id)
 
         if related == Related.Uri:
             return uri
