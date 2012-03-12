@@ -276,9 +276,7 @@ class ResourceTestData(object):
         data = TestData(self.api, force, related, id=id)
 
         fields = model_class._meta.fields
-        print "model_class", model_class
         for field in fields:
-            print field.name
             if isinstance(field, ForeignKey):
                 if field.name in resource_fields:
                     resource_field = resource_fields[field.name]

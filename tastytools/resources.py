@@ -68,8 +68,6 @@ class ModelResource(TastyModelResource):
                 related_objs.append(related_bundle.obj)
 
             if not hasattr(related_mngr, 'add'):
-                print related_mngr
-                print field_name
                 func = "save_m2m_%s" % field_name
                 if not hasattr(self, func):
                     msg = "Missing save ManyToMany related %s function: %s."
@@ -191,7 +189,7 @@ class ModelResource(TastyModelResource):
         if self._meta.testdata is not None:
             output = {
                     'POST': self._meta.testdata.post,
-                    'GET': self._meta.testdata.get
+                    'GET': self._meta.testdata.get,
             }
 
             requested_type = request.GET.get('type', 'False')
@@ -202,7 +200,7 @@ class ModelResource(TastyModelResource):
             response_class = HttpResponse
         else:
             output = {
-                    'error': 'missing api'
+                    'error': 'missing api',
             }
             response_class = http.HttpBadRequest
 

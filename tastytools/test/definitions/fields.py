@@ -63,7 +63,7 @@ def generate(api, setUp=None):
                     return
 
                 response = self.client.post(resource.get_resource_list_uri(),
-                    post_data)
+                    post_data, content_type='application/json')
 
                 for code in [401, 404, 500]:
                     msg = "%s returns a %s response when issuing a POST with" \
