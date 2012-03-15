@@ -163,7 +163,10 @@ def generate(api, setUp=None):
             if field.readonly and resource.can_patch():
                 #Create a resource to modify it
                 (location, obj) = resource.create_test_resource()
-                bad_value = UnderResourceFields.generate_field_test_data(field)
+                try:
+                    bad_value = UnderResourceFields.generate_field_test_data(field)
+                except FieldNotSupportedException:
+                    return
 
                 #attempt to PATCH
                 patch_data = {}

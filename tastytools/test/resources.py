@@ -233,7 +233,7 @@ class ResourceTestData(object):
             elif self.db is not None:
                 databases = [self.db]
             else:
-                databases = ['tastytools', 'test', '']
+                databases = ['tastytools', '']
 
             for db in databases:
                 try:
