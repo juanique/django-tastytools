@@ -36,7 +36,7 @@ dumpObjectIndented = (obj, indent="", isProp=false) ->
       out = "["+dumpObjectIndented(obj[0], indent + "  ", true)+"]"
     else
       ods = (dumpObjectIndented(item, indent + "  ")+"\n" for item in obj)
-      out = "[ \n" + ods + "\n"+"]\n"
+      out = "#{indent}[\n#{ods}\n#{indent}]\n"
 
   out = out.replace(/\n,/g, ",\n")
   out = out.replace(/\n\n/g, "\n")
