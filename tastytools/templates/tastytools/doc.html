@@ -68,11 +68,11 @@
             <table class='resources_table span8'>
                 <tr>
                     <th>List URI</th>
-                    <td><a href="<%= list_endpoint %>"><%= list_endpoint %></a></td>
+                    <td><a href="<%= list_endpoint %>?format=json"><%= list_endpoint %></a></td>
                 </tr>
                 <tr>
                     <th>Schema URI</th>
-                    <td><a href="<%= schema %>"><%= schema %></a></td>
+                    <td><a href="<%= schema %>?format=json"><%= schema %></a></td>
                 </tr>
                 <% _.each( ['List', 'Detail'], function(operation) { %>
                     <tr>

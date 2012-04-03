@@ -271,12 +271,15 @@ class ResourceTestData(object):
 
         '''
         model_class = self.resource._meta.object_class
+
         resource_fields = self.resource.fields
 
         data = TestData(self.api, force, related, id=id)
 
         fields = model_class._meta.fields
         for field in fields:
+            if field.name in self.resource._meta.excludes:
+                continue
             if isinstance(field, ForeignKey):
                 if field.name in resource_fields:
                     resource_field = resource_fields[field.name]
