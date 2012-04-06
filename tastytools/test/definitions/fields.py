@@ -41,6 +41,8 @@ def generate(api, setUp=None):
                 return [uri]
             elif field_classname == "DateField":
                 return datetime.now()
+            elif field_classname == "DictField":
+                return {}
             else:
                 raise FieldNotSupportedException(field_classname)
 
