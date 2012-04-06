@@ -36,7 +36,7 @@ def generate(api, setUp=None):
             elif field_classname == "ToManyField":
                 (uri, res) = field.to_class().create_test_resource()
                 return [uri]
-            elif field_classname == "ToOneField":
+            elif field_classname == "ToOneField" or field_classname == "ForeignKey":
                 (uri, res) = field.to_class().create_test_resource()
                 return [uri]
             elif field_classname == "DateField":
