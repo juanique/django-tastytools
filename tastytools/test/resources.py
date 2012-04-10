@@ -163,16 +163,21 @@ class ResourceTestData(object):
 
     @property
     def get(self):
-        '''Returns sample GET data for the resource.'''
+        """Returns sample GET data for the resource."""
+        self.get = False
 
-        (location, model) = self.create_test_resource()
+    @get.setter
+    def get(self, example=False):
+        """Returns sample GET data for the resource."""
+        (location, model) = self.create_test_resource(example=example)
         return self.api.dehydrate(resource=self.resource, obj=model)
 
-    def create_test_resource(self, force={}, *args, **kwargs):
+
+    def create_test_resource(self, force={}, example=False, *args, **kwargs):
         '''Creates a test resource and obtains it's URI
         and related object'''
 
-        model = self.create_test_model(force=force, *args, **kwargs)
+        model = self.create_test_model(force=force, example=example, *args, **kwargs)
         bundle = self.resource.build_bundle(obj=model)
         location = self.resource.get_resource_uri(bundle)
         return location, bundle.obj
@@ -204,8 +209,8 @@ class ResourceTestData(object):
         if id is not None:
             self.get_model_cache()[id] = model
 
-    def create_test_model(self, data=False, force=False, id=None, *args,
-            **kwargs):
+    def create_test_model(self, data=False, force=False, id=None,
+            example=False, *args, **kwargs):
         '''Creates a test model (or object asociated with the resource and
         returns it
 
