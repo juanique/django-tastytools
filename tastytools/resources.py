@@ -189,8 +189,8 @@ class ModelResource(TastyModelResource):
 
         if self._meta.testdata is not None:
             output = {
-                    'POST': self._meta.testdata.post,
-                    'GET': self._meta.testdata.get,
+                    'POST': self._meta.testdata._post(example=True),
+                    'GET': self._meta.testdata._get(example=True),
             }
 
             requested_type = request.GET.get('type', 'False')

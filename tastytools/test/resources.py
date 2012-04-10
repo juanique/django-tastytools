@@ -63,16 +63,16 @@ class TestData(object):
     def to_dict(self):
         return self.data
 
-    def set_related(self, obj):
+    def set_related(self, obj, example=False):
 
         for args in self.related_data:
             args['force'] = {args['related_name']: obj}
 
             del args['related_name']
-            self.set(**args)
+            self.set(example=example, **args)
 
     def set(self, name, constant=None, resource=None, count=None,
-        force=False, related_name=False, id=None):
+        force=False, related_name=False, id=None, example=False):
 
         if related_name:
             self.related_data.append({
@@ -94,11 +94,12 @@ class TestData(object):
                 value = []
                 while count > 0:
                     res = self.create_test_data(resource,
-                        related=self.related, force=force, id=id, model=constant)
+                        related=self.related, force=force, id=id,
+                        model=constant, example=example)
                     value.append(res)
                     count -= 1
             else:
-                value = self.create_test_data(resource,
+                value = self.create_test_data(resource, example=example,
                     related=self.related, force=force, id=id, model=constant)
         #elif constant is not None:
         else:
@@ -109,7 +110,7 @@ class TestData(object):
         return value
 
     def create_test_data(self, resource_name, related=Related.Model,
-        force=False, id=None, model=None):
+        force=False, id=None, model=None, example=False):
         force = force or {}
 
         resource = self.api.resource(resource_name)
@@ -119,7 +120,7 @@ class TestData(object):
             uri = resource.get_resource_uri(model)
             res = model
         else:
-            (uri, res) = resource.create_test_resource(force, id=id)
+            (uri, res) = resource.create_test_resource(force, id=id, example=example)
 
         if related == Related.Uri:
             return uri
@@ -158,15 +159,19 @@ class ResourceTestData(object):
     def post(self):
         '''Returns sample POST data for the resource.'''
 
-        return self.sample_data(related=Related.Uri).data
+        return self._post()
+
+    def _post(self, example=False):
+        '''Returns sample POST data for the resource.'''
+
+        return self.sample_data(related=Related.Uri, example=example).data
 
     @property
     def get(self):
         """Returns sample GET data for the resource."""
-        self.get = False
+        return self._get()
 
-    @get.setter
-    def get(self, example=False):
+    def _get(self, example=False):
         """Returns sample GET data for the resource."""
         (location, model) = self.create_test_resource(example=example)
         return self.api.dehydrate(resource=self.resource, obj=model)
@@ -241,7 +246,7 @@ class ResourceTestData(object):
         model_class = self.resource._meta.object_class
 
         data = data or self.sample_data(related=Related.Model, force=force,
-                id=id)
+                id=id, example=example)
 
         valid_data = {}
         m2m = {}
@@ -277,12 +282,12 @@ class ResourceTestData(object):
                 values = [values]
             for value in values:
                 getattr(model, m2m_field).add(value)
-        data.set_related(model)
+        data.set_related(model, example=example)
         self.set_cached_model(id, model)
         return model
 
     #@property
-    def sample_data(self, related=Related.Model, force=False, id=None):
+    def sample_data(self, related=Related.Model, force=False, id=None, example=False):
         '''Returns the full a full set of data as an _meta.testdata for
         interacting with the resource
 
@@ -300,7 +305,7 @@ class ResourceTestData(object):
             if isinstance(field, ForeignKey):
                 if field.name in resource_fields:
                     resource_field = resource_fields[field.name]
-                    data.set(field.name,
+                    data.set(field.name, example=example,
                             resource=resource_field.to._meta.resource_name)
             else:
                 if type(field) in FIELDCLASS_TO_GENERATOR:
