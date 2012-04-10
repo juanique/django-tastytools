@@ -5,6 +5,7 @@ from tastytools.test.client import Client, MultiTestCase, create_multi_meta
 from datetime import datetime
 from helpers import prepare_test_post_data
 import random
+import json
 
 
 class FieldNotSupportedException(Exception):
@@ -81,6 +82,10 @@ def generate(api, setUp=None):
                             response.status_code, response.content)
                     self.assertTrue(
                             content_type.startswith('application/json'), msg)
+                    try:
+                        json.loads(response.content)
+                    except ValueError, e:
+                        self.assertTrue(False, msg + str(e))
 
         @staticmethod
         def multi_help(self, resource_name, resource, field_name, field):
