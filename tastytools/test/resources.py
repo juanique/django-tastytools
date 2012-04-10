@@ -1,10 +1,8 @@
 from django.db.models.fields.related import ManyToManyField, ManyRelatedObjectsDescriptor
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
-from django.db import IntegrityError, DatabaseError
 from django.db.utils import ConnectionDoesNotExist
+from django.db import  DatabaseError
 from django.core.management import call_command
-
-import sys
 
 
 class Related(object):
@@ -44,6 +42,7 @@ class TestData(object):
 
         for args in self.related_data:
             args['force'] = {args['related_name']: obj}
+
             del args['related_name']
             self.set(**args)
 
@@ -165,10 +164,15 @@ class ResourceTestData(object):
                 model.save(using=db)
             except ConnectionDoesNotExist:
                 continue
+            except DatabaseError:
+                try:
+                    call_command('syncdb', migrate=True, database=db, interactive=False)
+                    model.save(using=db)
+                except ConnectionDoesNotExist:
+                    continue
 
         if model.pk is None:
             raise ConnectionDoesNotExist("Tried: %s" % ', '.join(databases))
-            
 
     def get_model_cache(self):
         if not hasattr(self.resource, "_models"):
@@ -184,6 +188,7 @@ class ResourceTestData(object):
 
     def create_test_model(self, data=False, force=False, id=None, *args,
             **kwargs):
+
         '''Creates a test model (or object asociated with the resource and
         returns it
 
@@ -226,43 +231,13 @@ class ResourceTestData(object):
 
         model = model_class(**valid_data)
 
-        try:
-            # if we are running tests, use the default database
-            if 'test' in sys.argv:
-                databases = ['']
-            elif self.db is not None:
-                databases = [self.db]
-            else:
-                databases = ['tastytools', 'test', '']
-
-            for db in databases:
-                try:
-                    model.save(using=db)
-                except IntegrityError as e:
-                    continue
-                except ConnectionDoesNotExist as e:
-                    continue
-                except DatabaseError as e:
-                    try:
-                        call_command('syncdb', migrate=True, database=db, interactive=False)
-                        model.save(using=db)
-                    except ConnectionDoesNotExist:
-                        continue
-        except IntegrityError as e:
-            if id is not None:
-                model = model_class.objects.get(**valid_data)
-                #print "Got %s %s" % (model_class.__name__, id)
-            else:
-                raise e
-
-        #print model
+        self.save_test_obj(model)
 
         for m2m_field, values in m2m.items():
             if type(values) is not list:
                 values = [values]
             for value in values:
                 getattr(model, m2m_field).add(value)
-
         data.set_related(model)
         self.set_cached_model(id, model)
         return model
