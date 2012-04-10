@@ -1,13 +1,11 @@
 from django.db.models.fields.related import ManyRelatedObjectsDescriptor
 from django.db.models.fields.related import ManyToManyField, ForeignKey
 from django.db.models.fields.related import ForeignRelatedObjectsDescriptor
-from django.db import IntegrityError, DatabaseError
 from django.db.utils import ConnectionDoesNotExist
+from django.db import  DatabaseError
 from django.core.management import call_command
 from django.db import models
-
 from tastytools.test import generators
-import sys
 
 FIELDCLASS_TO_GENERATOR = {
     models.BooleanField: generators.BooleanGenerator,
@@ -69,6 +67,7 @@ class TestData(object):
 
         for args in self.related_data:
             args['force'] = {args['related_name']: obj}
+
             del args['related_name']
             self.set(**args)
 
@@ -182,17 +181,34 @@ class ResourceTestData(object):
         location = self.resource.get_resource_uri(bundle)
         return location, bundle.obj
 
-    def save_test_obj(self, model):
-        if self.db is not None:
+    def save_test_obj(self, model, example=False):
+        """ sabes the test object to database.
+
+        If this is an example (for the docs page):
+            save it to the tastytools specified database, or, one of the
+            fallbachs ('the only fallback now is tastytools')
+        else:
+            save it to the default database
+
+        """
+        if not example:
+            databases = ['']
+        elif self.db is not None:
             databases = [self.db]
         else:
-            databases = ['tastytools', 'test', '']
+            databases = ['tastytools', '']
 
         for db in databases:
             try:
                 model.save(using=db)
             except ConnectionDoesNotExist:
                 continue
+            except DatabaseError:
+                try:
+                    call_command('syncdb', migrate=True, database=db, interactive=False)
+                    model.save(using=db)
+                except ConnectionDoesNotExist:
+                    continue
 
         if model.pk is None:
             raise ConnectionDoesNotExist("Tried: %s" % ', '.join(databases))
@@ -254,43 +270,13 @@ class ResourceTestData(object):
 
         model = model_class(**valid_data)
 
-        try:
-            # if we are running tests, use the default database
-            if 'test' in sys.argv:
-                databases = ['']
-            elif self.db is not None:
-                databases = [self.db]
-            else:
-                databases = ['tastytools', '']
-
-            for db in databases:
-                try:
-                    model.save(using=db)
-                except IntegrityError as e:
-                    continue
-                except ConnectionDoesNotExist as e:
-                    continue
-                except DatabaseError as e:
-                    try:
-                        call_command('syncdb', migrate=True, database=db, interactive=False)
-                        model.save(using=db)
-                    except ConnectionDoesNotExist:
-                        continue
-        except IntegrityError as e:
-            if id is not None:
-                model = model_class.objects.get(**valid_data)
-                #print "Got %s %s" % (model_class.__name__, id)
-            else:
-                raise e
-
-        #print model
+        self.save_test_obj(model, example=example)
 
         for m2m_field, values in m2m.items():
             if type(values) is not list:
                 values = [values]
             for value in values:
                 getattr(model, m2m_field).add(value)
-
         data.set_related(model)
         self.set_cached_model(id, model)
         return model

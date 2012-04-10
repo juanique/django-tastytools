@@ -157,6 +157,7 @@ class ModelResource(TastyModelResource):
         return self.create_response(request, bundle, http.HttpAccepted)
 
     def create_test_resource(self, force=False, *args, **kwargs):
+
         force = force or {}
         try:
             return self._meta.testdata.create_test_resource(force=force, *args,
