@@ -216,7 +216,7 @@ class ResourceTestData(object):
                     continue
 
         if model.pk is None:
-            raise ConnectionDoesNotExist("Tried: %s" % ', '.join(databases))
+            model.save()
 
     def get_model_cache(self):
         if not hasattr(self.resource, "_models"):

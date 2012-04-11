@@ -180,7 +180,6 @@ class Client(DjangoClient):
 class MultiTestCase(object):
 
     def setUp(self):
-        print "setup"
         pass
 
     @staticmethod
