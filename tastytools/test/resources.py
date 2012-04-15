@@ -298,15 +298,20 @@ class ResourceTestData(object):
 
         data = TestData(self.api, force, related)
 
+        data = self.get_data(data)
+
         fields = model_class._meta.fields
         for field in fields:
             if field.name in self.resource._meta.excludes:
                 continue
+            if field.name in data.data:
+                continue
             if isinstance(field, ForeignKey):
                 if field.name in resource_fields:
                     resource_field = resource_fields[field.name]
-                    data.set(field.name, example=example,
-                            resource=resource_field.to._meta.resource_name)
+                    data.set(field.name,
+                        resource=resource_field.to_class()._meta.resource_name,
+                        example=example)
             else:
                 if type(field) in FIELDCLASS_TO_GENERATOR:
                     generator_class = FIELDCLASS_TO_GENERATOR[type(field)]
@@ -317,8 +322,7 @@ class ResourceTestData(object):
                     value = generator.get_value()
                     if value is not None:
                         data.set(field.name, value)
-
-        return self.get_data(data)
+        return data
 
     def get_data(self, data):
         return data
