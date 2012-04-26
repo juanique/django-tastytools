@@ -40,13 +40,14 @@ class Related(object):
 
 class TestData(object):
 
-    def __init__(self, api, force=None, related=None, id=None):
+    def __init__(self, api, force=None, related=None, id=None, example=False):
         self.api = api
         self.force = force or {}
         self.related = related
         self.data = {}
         self.related_data = []
         self.id = id
+        self.example = example
 
     def __getitem__(self, name):
         return self.data[name]
@@ -72,7 +73,9 @@ class TestData(object):
             self.set(example=example, **args)
 
     def set(self, name, constant=None, resource=None, count=None,
-        force=False, related_name=False, id=None, example=False):
+        force=False, related_name=False, id=None, example=None):
+        if example is None:
+            example = self.example
 
         if related_name:
             self.related_data.append({
@@ -296,7 +299,7 @@ class ResourceTestData(object):
 
         resource_fields = self.resource.fields
 
-        data = TestData(self.api, force, related)
+        data = TestData(self.api, force, related, example=True)
 
         data = self.get_data(data)
 
@@ -306,6 +309,7 @@ class ResourceTestData(object):
                 continue
             if field.name in data.data:
                 continue
+            print field.name
             if isinstance(field, ForeignKey):
                 if field.name in resource_fields:
                     resource_field = resource_fields[field.name]
