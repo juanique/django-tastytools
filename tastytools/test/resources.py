@@ -309,7 +309,6 @@ class ResourceTestData(object):
                 continue
             if field.name in data.data:
                 continue
-            print field.name
             if isinstance(field, ForeignKey):
                 if field.name in resource_fields:
                     resource_field = resource_fields[field.name]
