@@ -299,7 +299,7 @@ class ResourceTestData(object):
 
         resource_fields = self.resource.fields
 
-        data = TestData(self.api, force, related, example=True)
+        data = TestData(self.api, force, related, example=example)
 
         data = self.get_data(data)
 
