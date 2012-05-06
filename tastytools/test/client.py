@@ -74,7 +74,7 @@ class Client(DjangoClient):
 
     @extended_response
     def patch(self, path, data=None, follow=False,
-        content_type="application/json", **extra):
+        content_type="application/json", parse="json", **extra):
         """
         Send a resource patch to the server using PATCH.
         """
@@ -87,6 +87,13 @@ class Client(DjangoClient):
 
         response = self.patch_request(path, data=data,
             content_type=content_type, **extra)
+
+        if parse == "json":
+            try:
+                response.data = simplejson.loads(response.content)
+            except:
+                response.data = None
+
 
         if follow:
             response = self._handle_redirects(response, **extra)
