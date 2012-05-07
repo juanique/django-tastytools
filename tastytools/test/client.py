@@ -126,7 +126,7 @@ class Client(DjangoClient):
 
     @extended_response
     def put(self, path, data=None, content_type='application/json',
-        follow=False, **extra):
+        follow=False, parse='json', **extra):
         """
         Overloads default Django client PUT request to setdefault content type
         to applcation/json and automatically sets data to a raw json string.
@@ -138,7 +138,14 @@ class Client(DjangoClient):
         if type(data) == dict:
             data = simplejson.dumps(data, cls=json.DjangoJSONEncoder)
 
-        return super(Client, self).put(path, data, content_type, **extra)
+        response = super(Client, self).put(path, data, content_type, **extra)
+
+        if parse == "json":
+            try:
+                response.data = simplejson.loads(response.content)
+            except:
+                response.data = None
+        return response
 
     @extended_response
     def delete(self, path, follow=False, obj=None, **extra):
