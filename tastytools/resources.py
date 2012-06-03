@@ -155,10 +155,7 @@ class ModelResource(TastyModelResource):
             if uploaded_file is not None:
                 setattr(obj, field_name, uploaded_file)
         obj.save()
-        bundle = self.build_bundle(obj=obj, request=request)
-        bundle = self.full_dehydrate(bundle)
-        bundle = self.alter_detail_data_to_serialize(request, bundle)
-        return self.create_response(request, bundle, http.HttpCreated)
+        return HttpResponse()
 
     def create_test_resource(self, force=False, *args, **kwargs):
 
