@@ -147,7 +147,6 @@ class ModelResource(TastyModelResource):
             return http.HttpMultipleChoices(
                     "More than one resource is found at this URI.")
 
-        print "Finding files"
         for field_name in getattr(self._meta, "uploads", []):
             uploaded_file = request.FILES.get(field_name, None)
             if uploaded_file is None:
@@ -155,8 +154,6 @@ class ModelResource(TastyModelResource):
                 uploaded_file = SimpleUploadedFile(filename, request.body)
             if uploaded_file is not None:
                 setattr(obj, field_name, uploaded_file)
-            print uploaded_file
-        print "Saving object"
         obj.save()
         bundle = self.build_bundle(obj=obj, request=request)
         bundle = self.full_dehydrate(bundle)
