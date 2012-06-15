@@ -12,6 +12,8 @@ from tastypie.authentication import Authentication
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.utils import trailing_slash
 
+import inspect
+
 
 class Resource(TastyResource):
     resource_uri = fields.CharField(help_text='URI of the resource.',
@@ -54,6 +56,8 @@ class ModelResource(TastyModelResource):
             if field_object.readonly:
                 continue
 
+            if inspect.isfunction(field_object.attribute):
+                continue
             # Get the manager.
             related_mngr = getattr(bundle.obj, field_object.attribute)
 
