@@ -6,6 +6,7 @@ import re
 import string
 import uuid
 from decimal import Decimal
+from django.utils.timezone import now, is_naive, utc
 
 # backporting os.path.relpath, only availabe in python >= 2.6
 try:
@@ -252,14 +253,20 @@ class NullBooleanGenerator(BooleanGenerator):
 
 
 class DateTimeGenerator(Generator):
-    min_date = datetime.datetime.now() - datetime.timedelta(365 * 5)
-    max_date = datetime.datetime.now() + datetime.timedelta(365 * 1)
+    min_date = now() - datetime.timedelta(365 * 5)
+    max_date = now() + datetime.timedelta(365 * 1)
 
     def __init__(self, min_date=None, max_date=None, *args, **kwargs):
         if min_date is not None:
             self.min_date = min_date
+        if is_naive(self.min_date):
+            self.min_date = self.min_date.replace(tzinfo=utc)
+
         if max_date is not None:
             self.max_date = max_date
+        if is_naive(self.max_date):
+            self.max_date = self.max_date.replace(tzinfo=utc)
+
         assert self.min_date < self.max_date
         super(DateTimeGenerator, self).__init__(*args, **kwargs)
 
