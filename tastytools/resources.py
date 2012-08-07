@@ -2,6 +2,7 @@ from tastypie.resources import Resource as TastyResource
 from tastypie.resources import ModelResource as TastyModelResource
 from django.conf.urls.defaults import url
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.files.uploadedfile import SimpleUploadedFile
 from tastytools import fields
 from test.resources import TestData
 from django.http import HttpResponse
@@ -148,13 +149,13 @@ class ModelResource(TastyModelResource):
 
         for field_name in getattr(self._meta, "uploads", []):
             uploaded_file = request.FILES.get(field_name, None)
+            if uploaded_file is None:
+                filename = request.GET['filename']
+                uploaded_file = SimpleUploadedFile(filename, request.body)
             if uploaded_file is not None:
                 setattr(obj, field_name, uploaded_file)
         obj.save()
-        bundle = self.build_bundle(obj=obj, request=request)
-        bundle = self.full_dehydrate(bundle)
-        bundle = self.alter_detail_data_to_serialize(request, bundle)
-        return self.create_response(request, bundle, http.HttpAccepted)
+        return HttpResponse()
 
     def create_test_resource(self, force=False, *args, **kwargs):
 
