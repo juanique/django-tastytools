@@ -65,7 +65,7 @@ def generate(api, setUp=None):
                 except:
                     return
 
-                response = self.client.post(resource.get_resource_list_uri(),
+                response = self.client.post(resource.get_resource_uri(),
                     post_data, content_type='application/json')
 
                 for code in [401, 404, 500]:
@@ -112,7 +112,7 @@ def generate(api, setUp=None):
                     return
                 post_data[field_name] = bad_value
                 post_response = self.client.post(
-                        resource.get_resource_list_uri(),
+                        resource.get_resource_uri(),
                         post_data, parse='json')
 
                 if post_response.status_code == 201:
@@ -143,7 +143,7 @@ def generate(api, setUp=None):
                         " a bad request error"
                 msg %= (resource_name, field_name)
                 post_response = self.client.post(
-                        resource.get_resource_list_uri(),
+                        resource.get_resource_uri(),
                         data=request_data, parse='json')
 
                 self.assertEqual(post_response.status_code, 400, msg)
