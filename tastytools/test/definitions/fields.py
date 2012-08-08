@@ -33,6 +33,8 @@ def generate(api, setUp=None):
                 bad_value = "abcd"
             elif field_classname == "IntegerField":
                 bad_value = 12345
+            elif field_classname == "FloatField":
+                bad_value = 123.456
             elif field_classname == "ToManyField":
                 (uri, res) = field.to_class().create_test_resource()
                 return [uri]
