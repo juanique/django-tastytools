@@ -4,6 +4,15 @@ django-tastytools
 
 Useful tools for developing REST services with django-tastypie
 
+*NOTE*: This repository is not being actively maintained, I'm doing a new version of this and I'm splitting the code into 3 parts:
+
+https://github.com/juanique/django-chocolate - Which handles mockup models creation for unit testing
+https://github.com/juanique/django-tastydocs - Which handles automatic web tastypie api documentation (it depends on django-chocolate)
+
+And I still need to define a 3rd part which will cover automatic test generation for fuzzy testing and code quality.
+
+The new code base is still new and lacks a lot of documentation. But is still recommended.
+
 Requirements
 ============
 
