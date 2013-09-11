@@ -1,4 +1,3 @@
-
 ===============================
 Getting Started with TastyTools
 ===============================
@@ -135,7 +134,10 @@ Generating Example Data for your Tastypie API
 =============================================
 
 Every great documentation has examples, so tastytools helps you with this by
-generating example data:
+generating example data. 
+
+**Note**: For this to work, your resources have to sublcass tastytools.resources.ModelResource
+
 Implement a Test Data class, it's the one in charge of creating data for our tests::
 
     # myapp/api/tools.py
