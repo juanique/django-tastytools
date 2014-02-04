@@ -100,10 +100,10 @@ def generate(api, setUp=None):
                 post_data = prepare_test_post_data(self, resource)
 
                 post_response = self.client.post(
-                    resource.get_resource_list_uri(), post_data)
+                    resource.get_resource_uri(), post_data)
 
                 msg = "Failed to POST testdata data for resource %s"\
-                    "S: %s. R(%s): %s"
+                    ": %s. R(%s): %s"
                 msg %= (resource_name,
                         post_data,
                         post_response.status_code,

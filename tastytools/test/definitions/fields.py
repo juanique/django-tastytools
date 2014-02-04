@@ -5,6 +5,7 @@ from tastytools.test.client import Client, MultiTestCase, create_multi_meta
 from datetime import datetime
 from helpers import prepare_test_post_data
 import random
+import json
 
 
 class FieldNotSupportedException(Exception):
@@ -66,8 +67,8 @@ def generate(api, setUp=None):
                 except:
                     return
 
-                response = self.client.post(resource.get_resource_list_uri(),
-                    post_data)
+                response = self.client.post(resource.get_resource_uri(),
+                    post_data, content_type='application/json')
 
                 for code in [401, 404, 500]:
                     msg = "%s returns a %s response when issuing a POST with" \
@@ -83,6 +84,10 @@ def generate(api, setUp=None):
                             response.status_code, response.content)
                     self.assertTrue(
                             content_type.startswith('application/json'), msg)
+                    try:
+                        json.loads(response.content)
+                    except ValueError, e:
+                        self.assertTrue(False, msg + str(e))
 
         @staticmethod
         def multi_help(self, resource_name, resource, field_name, field):
@@ -109,7 +114,7 @@ def generate(api, setUp=None):
                     return
                 post_data[field_name] = bad_value
                 post_response = self.client.post(
-                        resource.get_resource_list_uri(),
+                        resource.get_resource_uri(),
                         post_data, parse='json')
 
                 if post_response.status_code == 201:
@@ -140,7 +145,7 @@ def generate(api, setUp=None):
                         " a bad request error"
                 msg %= (resource_name, field_name)
                 post_response = self.client.post(
-                        resource.get_resource_list_uri(),
+                        resource.get_resource_uri(),
                         data=request_data, parse='json')
 
                 self.assertEqual(post_response.status_code, 400, msg)
@@ -167,7 +172,10 @@ def generate(api, setUp=None):
             if field.readonly and resource.can_patch():
                 #Create a resource to modify it
                 (location, obj) = resource.create_test_resource()
-                bad_value = UnderResourceFields.generate_field_test_data(field)
+                try:
+                    bad_value = UnderResourceFields.generate_field_test_data(field)
+                except FieldNotSupportedException:
+                    return
 
                 #attempt to PATCH
                 patch_data = {}
